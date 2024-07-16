@@ -1,0 +1,40 @@
+.dashboard-container {
+    padding: 20px;
+  }
+  
+  .dashboard-cards {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+  
+  .dashboard-card {
+    width: 300px;
+    margin: 20px;
+  }
+  
+  .wide-card {
+    flex: 1;
+    min-width: 400px;
+  }
+  
+  .prediction-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column; /* Ensure the prediction section is column-oriented */
+    margin-top: 20px;
+  }
+  
+  .prediction-card {
+    width: 500px;
+    padding: 20px;
+    margin-bottom: 20px; /* Add margin to the bottom to separate from the result card */
+  }
+  
+  .prediction-result-card {
+    width: 500px; /* Match the width of the prediction card */
+    padding: 20px;
+  }
+  

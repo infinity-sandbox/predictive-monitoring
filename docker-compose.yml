@@ -1,0 +1,30 @@
+version: "3"
+services:
+  backend1:
+    container_name: backend1
+    build:
+        context: ./
+        dockerfile: dockerfile.backend1
+    image: backend1:latest
+    restart: unless-stopped
+    expose:
+      - 8000
+    ports:
+      - "8000:8000"
+    environment:
+      MYSQL_DB_HOST: host.docker.internal  # Use host.docker.internal to refer to host machine
+      MYSQL_DB_PORT: ${MYSQL_DB_PORT}  # Port 3306 is the default for MySQL
+      MYSQL_DB_USER: ${MYSQL_DB_USER}  # Reference environment variables from .env file
+      MYSQL_DB_PASSWORD: ${MYSQL_DB_PASSWORD}
+      MYSQL_DB: ${MYSQL_DB}
+  frontend1:
+    container_name: frontend1
+    build:
+        context: ./
+        dockerfile: dockerfile.frontend1
+    image: frontend1:latest
+    restart: unless-stopped
+    expose:
+      - 3000 
+    ports:
+      - "3000:3000"
