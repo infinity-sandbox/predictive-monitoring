@@ -1,28 +1,30 @@
 version: "3"
 services:
-  backend1:
-    container_name: backend1
+  osai_backend:
+    container_name: osai_backend
     build:
         context: ./
-        dockerfile: dockerfile.backend1
-    image: backend1:latest
+        dockerfile: server/dockerfile.osai_backend
+    image: osai_backend:latest
     restart: unless-stopped
     expose:
       - 8000
     ports:
       - "8000:8000"
+    # volumes:
+    #   - ./server/logs:/backend/logs
     environment:
       MYSQL_DB_HOST: host.docker.internal  # Use host.docker.internal to refer to host machine
       MYSQL_DB_PORT: ${MYSQL_DB_PORT}  # Port 3306 is the default for MySQL
       MYSQL_DB_USER: ${MYSQL_DB_USER}  # Reference environment variables from .env file
       MYSQL_DB_PASSWORD: ${MYSQL_DB_PASSWORD}
       MYSQL_DB: ${MYSQL_DB}
-  frontend1:
-    container_name: frontend1
+  osai_frontend:
+    container_name: osai_frontend
     build:
         context: ./
-        dockerfile: dockerfile.frontend1
-    image: frontend1:latest
+        dockerfile: dashboard/dockerfile.osai_frontend
+    image: osai_frontend:latest
     restart: unless-stopped
     expose:
       - 3000 

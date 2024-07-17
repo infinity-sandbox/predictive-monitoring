@@ -5,7 +5,7 @@ from mysql.connector import Error
 import sys
 from dotenv import load_dotenv
 import os
-from server.logs.loggers.logger import logger_config
+from logs.loggers.logger import logger_config
 import pandas as pd
 logger = logger_config(__name__)
 load_dotenv()

@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from server.api.api_v1.handlers import fetchData
+from app.api.api_v1.handlers import fetchData
 
 router = APIRouter()
 

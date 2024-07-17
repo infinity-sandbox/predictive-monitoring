@@ -2,9 +2,9 @@ import os, sys
 from pathlib import Path
 from fastapi import FastAPI, HTTPException, Depends, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from server.logs.loggers.logger import logger_config
+from logs.loggers.logger import logger_config
 logger = logger_config(__name__)
-from server.api.api_v1.router import router
+from app.api.api_v1.router import router
 from fastapi.responses import JSONResponse
 
 
@@ -26,7 +26,7 @@ app.add_middleware(
 async def serve_frontend():
     return JSONResponse(
                 content={
-                    "message": "applicare backend api. welcome to the jungle!",
+                    "message": "applicare backend api. welcome to the jungle!!",
                 }
             )
 

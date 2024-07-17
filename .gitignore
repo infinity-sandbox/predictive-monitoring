@@ -6,7 +6,7 @@ __pycache__/
 # C extensions
 *.so
 .DS_Store
-
+node_modules/
 # Distribution / packaging
 # data/
 @�@��J
@@ -20,6 +20,7 @@ develop-eggs/
 downloads/
 eggs/
 .eggs/
+*.egg-info/
 lib/
 lib64/
 parts/
@@ -192,5 +193,4 @@ server/test.py
 test_script/
 .env
 aibou.egg-info/
-logs/
 venv_aibou/

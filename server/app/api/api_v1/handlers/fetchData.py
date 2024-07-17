@@ -2,10 +2,10 @@ from fastapi import APIRouter, HTTPException, Header, status
 from fastapi.responses import JSONResponse
 from typing import List
 from fastapi import APIRouter, Depends, FastAPI
-from server.logs.loggers.logger import logger_config
+from logs.loggers.logger import logger_config
 logger = logger_config(__name__)
 from fastapi import APIRouter
-from server.api.api_v1.handlers.pipeline import connect_fetch_db, data_cleaning, feature_selection, tseries
+from app.api.api_v1.handlers.pipeline import connect_fetch_db, data_cleaning, feature_selection, tseries
 from pydantic import BaseModel
 from datetime import datetime
 

@@ -6,6 +6,11 @@ setup(
     name="osai",
     version="0.0.1",
     packages=find_packages(),
+    entry_points={
+        "console_scripts": [
+            "osai = utils.cli:cli",
+        ]
+    },
     author="osai",
     author_email="abel@osai.com",
     description="Welcome to osai",
