@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Button } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import './LandingPage.css'; // Import the CSS file
+import '../styles/LandingPage.css'; // Import the CSS file
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();

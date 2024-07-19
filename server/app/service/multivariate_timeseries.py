@@ -233,14 +233,25 @@ class MultivariateTimeSeries:
             elif not MultivariateTimeSeries.check_stationarity(macro_data[feature]):
                 logger.warning(f"Feature {feature} is not stationary. Differencing the data.")
                 macro_data[feature] = macro_data[feature].diff().dropna()
+        # Drop row that are not inside macro_data (for dropdown values) 
+        if column not in macro_data.columns:
+            logger.error(f"Column '{column}' not found in predictions.")
+            return HTTPException(status_code=404, detail=f"Column '{column}' not found in predictions.")
         macro_data = macro_data.dropna()
         if macro_data.shape[1] < 2:
             logger.error("Not enough features left after filtering for stationarity and constant series.")
             return None
-        train_df = macro_data[:-12]
-        test_df = macro_data[-12:]
-        logger.info(train_df.head())
-        logger.info(train_df.info())
+        # train_df = macro_data[:-12]
+        # test_df = macro_data[-12:]
+        # logger.info(train_df.head())
+        # logger.info(train_df.info())
+        # Split data into training and testing based on time
+        # Split data into training and testing based on time
+        # TODO: comment this
+        train_size = int(len(macro_data) * 0.1)  # Calculate 70% of the data length
+        train_df = macro_data.iloc[:train_size]  # Use the first 70% for training
+        test_df = macro_data.iloc[train_size:]   # Use the remaining 30% for testing
+        #
         corr_matrix = train_df.corr().abs()
         upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
         high_corr_features = [column for column in upper.columns if any(upper[column] > 0.9)]
@@ -265,7 +276,7 @@ class MultivariateTimeSeries:
         var_model = VARMAX(train_df, order=reduced_order, enforce_stationarity=True)
         logger.info(f"Fitting VARMAX model with order {reduced_order}...")
         signal.signal(signal.SIGALRM, MultivariateTimeSeries.handler)
-        signal.alarm(60 * 10)
+        signal.alarm(60 * 60) # one hour timeout
         try:
             fitted_model = var_model.fit(disp=True)
             signal.alarm(0)
@@ -295,9 +306,9 @@ class MultivariateTimeSeries:
         logger.info(predictions.head())
         logger.info(predictions.shape)
         logger.info(predictions.info())
-        if column not in predictions.columns:
-            logger.error(f"Column '{column}' not found in predictions.")
-            return HTTPException(status_code=404, detail=f"Column '{column}' not found in predictions.")
+        # if column not in predictions.columns:
+        #     logger.error(f"Column '{column}' not found in predictions.")
+        #     return HTTPException(status_code=404, detail=f"Column '{column}' not found in predictions.")
         feature_importances_dict = MultivariateTimeSeries.feature_selection(column, predictions)
         # Pair the features with their importances
         features_with_importances = list(zip(feature_importances_dict['features'], feature_importances_dict['importance']))

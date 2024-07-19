@@ -1,116 +1,214 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Typography, Spin, Button, Card, DatePicker, message } from 'antd';
-import { Bar } from '@ant-design/charts';
-import moment from 'moment';
-import './Dashboard.css'; // Import the CSS file
+import { Button, Select, Spin, Row, Col, Divider } from 'antd';
+import { Line, Bar } from 'react-chartjs-2';
+import 'chart.js/auto'; // Import the necessary chart.js components
+import '../styles/Dashboard.css';
 
-const { Title } = Typography;
+const { Option } = Select;
+const baseUrl = process.env.REACT_APP_BACKEND_API_URL;
+
+interface DropdownItem {
+  value: string;
+  label: string;
+}
+
+interface DataWithDate {
+  date: string[];
+  [key: string]: string[] | number[];
+}
+
+interface ForecastResponse {
+  predictions: DataWithDate[];
+  causes: { features: string[]; importance: number[] };
+  train: DataWithDate[];
+  test: DataWithDate[];
+}
 
 const Dashboard: React.FC = () => {
-  const [mlMetric, setMlMetric] = useState<number | null>(null);
-  const [featureImportances, setFeatureImportances] = useState<{
-    features: string[];
-    importance: number[];
-  } | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [predictionDate, setPredictionDate] = useState<moment.Moment | null>(null);
-  const [predictionResult, setPredictionResult] = useState<string | null>(null);
-  const [predicting, setPredicting] = useState<boolean>(false);
+  const [days, setDays] = useState<number | undefined>(undefined);
+  const [column, setColumn] = useState<string | undefined>(undefined);
+  const [dropdownItems, setDropdownItems] = useState<DropdownItem[]>([]);
+  const [forecastData, setForecastData] = useState<ForecastResponse | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get('http://0.0.0.0:8000/api/v1/fetch_data/importance'); // Adjust URL as per your API endpoint
-        setMlMetric(response.data.ml_metric);
-        setFeatureImportances(response.data.casual_features);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        message.error('Error fetching data.');
-      }
-    };
-
-    fetchData();
+    axios.get(baseUrl + '/api/v1/varmax/dropdown_data')
+      .then(response => setDropdownItems(response.data))
+      .catch(error => console.error('Error fetching dropdown data:', error));
   }, []);
 
-  const handlePredict = async () => {
-    if (!predictionDate) {
-      message.error('Please select a prediction date.');
-      return;
-    }
-
-    setPredicting(true);
-
-    try {
-      const formattedDate = predictionDate.format('YYYY-MM-DD HH:mm');
-      const response = await axios.post('http://0.0.0.0:8000/api/v1/fetch_data/predict', { date: formattedDate });
-      setPredictionResult(response.data.prediction);
-      message.success('Prediction successful!');
-    } catch (error) {
-      console.error('Error making prediction:', error);
-      message.error('Error making prediction.');
-    } finally {
-      setPredicting(false);
+  const handleForecast = () => {
+    if (days !== undefined && column) {
+      setLoading(true);
+      axios.post(baseUrl + '/api/v1/varmax/forecaster', { days, column })
+        .then(response => {
+          setForecastData(response.data);
+          setLoading(false);
+        })
+        .catch(error => {
+          console.error('Error fetching forecast data:', error);
+          setLoading(false);
+        });
     }
   };
 
+  // Define colors and their types
+  const colors: { [key: string]: string } = {
+    predictions: '#ff5733', // Orange
+    train: '#33ff57',      // Green
+    test: '#3357ff'        // Blue
+  };
+
+  const renderLineChart = (dataList: DataWithDate[], label: string) => {
+    // Extract dates from the first entry
+    const labels = dataList[0]?.date || [];
+    
+    // Create datasets for each column in the dataList
+    const datasets = dataList.flatMap((data, index) => {
+      const type = label.toLowerCase() as keyof typeof colors; // Assert the type
+      return Object.keys(data)
+        .filter(key => key !== 'date') // Exclude the 'date' key
+        .map((colName) => ({
+          label: `${label} ${index + 1} (${colName})`,
+          data: data[colName] as number[], // Cast to number array
+          borderColor: colors[type] || '#318CE7', // Use color based on dataset type, default to black
+          backgroundColor: 'rgba(0,0,0,0)',
+          borderWidth: 2,
+        }));
+    });
+  
+    return (
+      <Line
+        data={{
+          labels,
+          datasets,
+        }}
+        options={{
+          responsive: true,
+          scales: {
+            x: { 
+              beginAtZero: false,
+              title: { 
+                display: true, 
+                text: 'Date'
+              }
+            },
+            y: { 
+              beginAtZero: false,
+              title: { 
+                display: true, 
+                text: 'Value'
+              }
+            },
+          },
+        }}
+      />
+    );
+  };
+
+  const renderBarChart = (causes: { features: string[]; importance: number[] }) => {
+    return (
+      <Bar
+        data={{
+          labels: causes.features,
+          datasets: [{
+            label: 'Importance',
+            data: causes.importance,
+            backgroundColor: '#318CE7', // Green for bar chart
+          }],
+        }}
+        options={{
+          responsive: true,
+          indexAxis: 'y', // This makes the chart horizontal
+          scales: {
+            x: { 
+              beginAtZero: true,
+              title: { 
+                display: true, 
+                text: 'Importance' 
+              }
+            },
+            y: {
+              title: { 
+                display: true, 
+                text: 'Features' 
+              }
+            },
+          },
+        }}
+      />
+    );
+  };
+
+  // Create array of numbers from 1 to 14
+  const daysOptions = Array.from({ length: 14 }, (_, i) => i + 1);
+
   return (
-    <div className="dashboard-container">
-      <div className="dashboard-cards">
-        <Card className="dashboard-card">
-          <Spin spinning={loading}>
-            <Title level={4}>AI Model Error Threshold (MSE)</Title>
-            <p>{mlMetric !== null ? mlMetric.toFixed(10) : 'Loading...'}</p>
-          </Spin>
-        </Card>
-        <Card className="dashboard-card wide-card">
-          <Spin spinning={loading}>
-            <Title level={4}>Causes for CPU Performance Overload</Title>
-            {featureImportances ? (
-              <Bar
-                data={featureImportances.importance.map((value, index) => ({
-                  feature: featureImportances.features[index],
-                  importance: value,
-                }))}
-                xField="feature"
-                yField="importance"
-                color="rgba(75, 192, 192, 0.6)"
-                xAxis={{ label: { autoRotate: false } }}
-                yAxis={{ label: { formatter: (v: any) => `${v}%` } }}
-                meta={{
-                  feature: { alias: 'Feature' },
-                  importance: { alias: 'Importance' },
-                }}
-                height={400}
-              />
-            ) : (
-              <p>Loading...</p>
-            )}
-          </Spin>
-        </Card>
+    <div className="dashboard">
+      <div className="selectors">
+        <Select
+          value={days}
+          onChange={(value) => setDays(value)}
+          style={{ width: 120, marginRight: 16, color: 'blue' }}
+          placeholder="Days"
+        >
+          {daysOptions.map(day => (
+            <Option key={day} value={day}>{day}</Option>
+          ))}
+        </Select>
+        <Select
+          value={column}
+          onChange={(value) => setColumn(value)}
+          style={{ width: 200, marginRight: 16, color: 'blue' }}
+          placeholder="Select Column"
+        >
+          {dropdownItems.map(item => (
+            <Option key={item.value} value={item.value}>{item.label}</Option>
+          ))}
+        </Select>
+        <Button
+          type="primary"
+          onClick={handleForecast}
+          disabled={days === undefined || column === undefined}
+        >
+          Forecast
+        </Button>
       </div>
-      <div className="prediction-section">
-        <Card className="prediction-card">
-          <Title level={4}>Enter Prediction Date</Title>
-          <DatePicker
-            showTime
-            format="YYYY-MM-DD HH:mm"
-            value={predictionDate}
-            onChange={(date) => setPredictionDate(date)}
-            style={{ marginBottom: '10px', width: '100%' }}
-          />
-          <Button type="primary" onClick={handlePredict} loading={predicting} style={{ width: '100%' }}>
-            Predict
-          </Button>
-        </Card>
-        {predictionResult !== null && (
-          <Card className="prediction-result-card">
-            <Title level={4}>Prediction Result</Title>
-            <p>{predictionResult}</p>
-          </Card>
-        )}
-      </div>
+
+      {loading ? (
+        <div className="loading">
+          <Spin size="large" />
+        </div>
+      ) : (
+        forecastData && (
+          <>
+            <Row gutter={16} className="charts-container">
+              <Col span={16} className="main-chart">
+                {renderLineChart([forecastData.predictions.slice(-1)[0], forecastData.train.slice(-1)[0], forecastData.test.slice(-1)[0]], 'Latest Data')}
+              </Col>
+              <Col span={8} className="side-chart">
+                {renderBarChart(forecastData.causes)}
+              </Col>
+            </Row>
+            <Divider />
+            <Row gutter={16} className="charts-container">
+              {forecastData.predictions.slice(0, 3).map((_, index) => (
+                <Col span={24} key={index} className="line-chart">
+                  {renderLineChart(
+                    [
+                      forecastData.predictions[index],
+                      forecastData.train[index],
+                      forecastData.test[index]
+                    ],
+                    `Data Point ${index + 1}`
+                  )}
+                </Col>
+              ))}
+            </Row>
+          </>
+        )
+      )}
     </div>
   );
 };
