@@ -7,4 +7,4 @@ Installation Manual
 4. Run the installation script to set up the system: `./initializeAnalyticsSignals.sh`
 5. Open the application at `http://0.0.0.0:3000`
 
-dashboard manual: `Dashboard Documentation <docs/dashboard_manual.rst>`
+Refer to the `Dashboard Manual <docs/dashboard_manual.rst>`_ for more information.
