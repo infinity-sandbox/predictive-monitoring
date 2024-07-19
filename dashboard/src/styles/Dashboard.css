@@ -18,6 +18,38 @@
   height: 100vh;
 }
 
+/* Dashboard.css */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80vh;
+  position: relative; /* Allows positioning adjustments */
+}
+
+.ant-spin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ant-spin-dot {
+  border-radius: 50%; /* Ensures the spinner is circular */
+  border-top-color: #318CE7; /* Blue color for the spinner */
+  border-right-color: #318CE7; /* Blue color for the spinner */
+  border-bottom-color: #318CE7; /* Blue color for the spinner */
+  border-left-color: #318CE7; /* Blue color for the spinner */
+}
+
+.ant-spin-dot-item {
+  border-radius: 50%; /* Ensures each dot is circular */
+}
+
+/* Adjust the height of the spinner container */
+.ant-spin-dot {
+  font-size: 48px; /* Adjust the size as needed */
+}
+
 .charts-container {
   display: flex;
   justify-content: space-around;

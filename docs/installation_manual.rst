@@ -6,5 +6,3 @@ Installation Manual
 3. Grant execution permissions to the installation shell script: `chmod +x initializeAnalyticsSignals.sh`
 4. Run the installation script to set up the system: `./initializeAnalyticsSignals.sh`
 5. Open the application at `http://0.0.0.0:3000`
-
-dashboard manual: `Dashboard Documentation <docs/dashboard_manual.rst>`

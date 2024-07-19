@@ -105,7 +105,7 @@ const colors: { [key: string]: string } = {
           plugins: {
             title: {
               display: true,
-              text: `Data for ${columnNames.join(', ')}`, // Use column names for the title
+              text: `Forecast for ${columnNames.join(', ')}`, // Use column names for the title
               font: {
                 size: 16,
                 weight: 'bold',
@@ -137,10 +137,7 @@ const colors: { [key: string]: string } = {
     );
   };
   
-  
-  
-    
-  const renderBarChart = (causes: { features: string[]; importance: number[] }) => {
+  const renderBarChart = (causes: { features: string[]; importance: number[] }, columnName: string) => {
     return (
       <Bar
         data={{
@@ -154,6 +151,20 @@ const colors: { [key: string]: string } = {
         options={{
           responsive: true,
           indexAxis: 'y', // This makes the chart horizontal
+          plugins: {
+            title: {
+              display: true,
+              text: `Causes for ${columnName}`, // Dynamic title
+              padding: {
+                top: 5,
+                bottom: 10,
+              },
+              font: {
+                size: 15,
+                weight: 'bold',
+              },
+            },
+          },
           scales: {
             x: { 
               beginAtZero: true,
@@ -221,9 +232,11 @@ const colors: { [key: string]: string } = {
                 {renderLineChart([forecastData.predictions.slice(-1)[0], forecastData.train.slice(-1)[0], forecastData.test.slice(-1)[0]], 'Latest Data')}
               </Col>
               <Col span={8} className="side-chart">
-                {renderBarChart(forecastData.causes)}
+                {renderBarChart(forecastData.causes, column || "N/A")} {/* Pass column name here */}
               </Col>
             </Row>
+            <Divider />
+            <h3><i>Forecasting Causes</i></h3>
             <Divider />
             <Row gutter={16} className="charts-container">
               {forecastData.predictions.slice(0, 3).map((_, index) => (
