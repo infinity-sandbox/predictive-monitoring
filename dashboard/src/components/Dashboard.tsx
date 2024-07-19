@@ -54,30 +54,31 @@ const Dashboard: React.FC = () => {
   };
 
   // Define colors and their types
-  const colors: { [key: string]: string } = {
+const colors: { [key: string]: string } = {
     predictions: '#ff5733', // Orange
     train: '#33ff57',      // Green
     test: '#3357ff'        // Blue
   };
-
-  const renderLineChart = (dataList: DataWithDate[], label: string) => {
+  
+  const renderLineChart = (dataList: DataWithDate[], type: string) => {
     // Extract dates from the first entry
     const labels = dataList[0]?.date || [];
     
     // Create datasets for each column in the dataList
     const datasets = dataList.flatMap((data, index) => {
-      const type = label.toLowerCase() as keyof typeof colors; // Assert the type
+      // Determine the dataset type based on the index
+      const datasetType = index === 0 ? 'predictions' : index === 1 ? 'train' : 'test';
       return Object.keys(data)
         .filter(key => key !== 'date') // Exclude the 'date' key
         .map((colName) => ({
-          label: `${label} ${index + 1} (${colName})`,
+          label: `${datasetType.charAt(0).toUpperCase() + datasetType.slice(1)} (${colName})`,
           data: data[colName] as number[], // Cast to number array
-          borderColor: colors[type] || '#318CE7', // Use color based on dataset type, default to black
+          borderColor: colors[datasetType] || '#318CE7', // Use color based on dataset type, default to blue
           backgroundColor: 'rgba(0,0,0,0)',
           borderWidth: 2,
         }));
     });
-  
+    
     return (
       <Line
         data={{
@@ -106,7 +107,7 @@ const Dashboard: React.FC = () => {
       />
     );
   };
-
+  
   const renderBarChart = (causes: { features: string[]; importance: number[] }) => {
     return (
       <Bar
