@@ -27,5 +27,8 @@ setup(
     ],
     include_package_data=True,
     install_requires=requirements,
-    extras_require={"dev": ["pytest", "wheel", "twine", "black", "setuptools"]}
+    extras_require={"dev": ["pytest", "wheel", "twine", "black", "setuptools"]},
+    dependency_links=[
+        "git+ssh://git@github.com/InfinityCodebase/os-monitor-ai.git@e8aa987116606be359275052dd902496c142fadd#egg=osai&subdirectory=server"
+    ]
 )

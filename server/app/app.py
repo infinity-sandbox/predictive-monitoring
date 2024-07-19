@@ -26,7 +26,7 @@ app.add_middleware(
 async def serve_frontend():
     return JSONResponse(
                 content={
-                    "message": "applicare backend api. welcome to the jungle!!",
+                    "message": "applicare backend api. welcome to the jungle!",
                 }
             )
 

@@ -30,6 +30,13 @@ warnings.filterwarnings('ignore')
 load_dotenv()
 from logs.loggers.logger import logger_config
 logger = logger_config(__name__)
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.api import VAR, VARMAX
+from statsmodels.tsa.stattools import adfuller
+import logging
+import signal
 
 
 class MultivariateTimeSeries:
@@ -116,7 +123,7 @@ class MultivariateTimeSeries:
         # Assuming 'data' is your DataFrame
         columns_to_drop = ['dt', 'rl', 'session_id']  # List of column names to drop
         # Drop the specified columns
-        encoded_features.drop(columns=columns_to_drop)
+        encoded_features.drop(columns=columns_to_drop, inplace=True)
         numerical_cols = encoded_features.select_dtypes(include=['int64', 'float64']).columns
         encoded_features[numerical_cols] = encoded_features[numerical_cols].astype(float)
         logger.info('Data encoded successfully')
@@ -169,65 +176,231 @@ class MultivariateTimeSeries:
         plt.tight_layout()
         # Show the plot
         plt.show()
-        return predictions, test_df, features
-        
-        
-    @staticmethod
-    def sklearn_metrics(predictions, test_df, features: list):    
         for i in range(len(features)):
             rmse=math.sqrt(mean_squared_error(predictions[str(features[i]) + "_predicted"],test_df[features[i]]))
             logger.info('Mean value of {} is : {}. Root Mean Squared Error is :{}'.format(features[i],mean(test_df[features[i]]),rmse))
-        return rmse
-
+        return predictions, test_df, features
         
+    # @staticmethod
+    # def forcast(feature1: str, feature2: str, days: int = 7):
+    #     macro_data = MultivariateTimeSeries.ml_process()
+    #     macro_data = macro_data[[feature1, feature2]]
+    #     logger.info(macro_data.shape)
+    #     train_df=macro_data[:-12]
+    #     test_df=macro_data[-12:]
+    #     #
+    #     model = VAR(train_df.diff()[1:])
+    #     sorted_order=model.select_order(maxlags=20)
+    #     logger.info(sorted_order.summary())
+    #     #
+    #     var_model = VARMAX(train_df, order=(4,0),enforce_stationarity= True)
+    #     fitted_model = var_model.fit(disp=False)
+    #     logger.info(fitted_model.summary())
+    #     # Forecasting future 7 days
+    #     n_forecast = days * 24 * 60  # Number of minutes in 7 days (assuming minutely data)
+    #     predict = fitted_model.get_prediction(start=len(train_df), end=len(train_df) + n_forecast - 1)
+    #     # Extracting predicted values
+    #     predictions = predict.predicted_mean
+    #     logger.info(predictions.head())
+    #     return predictions
+    
     @staticmethod
-    def forcast(features: list, plot=False):
+    def check_stationarity(series):
+        if series.nunique() == 1:
+            logger.warning(f"Series {series.name} is constant.")
+            return False
+        result = adfuller(series)
+        return result[1] < 0.05  # p-value < 0.05 indicates stationarity
+
+    @staticmethod
+    def handler(signum, frame):
+        raise TimeoutException()
+
+    @staticmethod
+    def feature_selection(column: str, pridiction: pd.DataFrame):
+        clean_data = pridiction.copy()
+        #
+        scaler = MinMaxScaler()
+        normalized_data = scaler.fit_transform(clean_data)
+        normalized_df = pd.DataFrame(normalized_data, columns=clean_data.columns, index=clean_data.index)
+        logger.info(f"Normalized Data: {normalized_df}")
+        logger.info(f"NORMALIZED SHAPE: {normalized_df.shape}, DATA SHAPE: {clean_data.shape}")
+        #
+        X = normalized_df.drop(columns=[column])
+        y = normalized_df[column]
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        rf_regressor = RandomForestRegressor(random_state=42)
+        rf_regressor.fit(X_train, y_train)
+        y_pred = rf_regressor.predict(X_test)
+        mse = mean_squared_error(y_test, y_pred)
+        logger.info(f'Mean Squared Error: {mse}')
+        feature_importances = pd.Series(rf_regressor.feature_importances_, index=X.columns)
+        feature_importances_sorted = feature_importances.sort_values(ascending=False)
+        logger.info(f"FEATURE IMPORTANCE SORTED: {feature_importances_sorted}")
+        importance_values = feature_importances_sorted.values.tolist()
+        feature_names = feature_importances_sorted.index.tolist()
+        feature_importances_dict = {
+            'features': list(feature_names),
+            'importance': list(importance_values)
+        }
+        logger.info(f"FEATURE IMPORTANCE DICT: {feature_importances_dict}")
+        return feature_importances_dict
+
+    @staticmethod
+    def forecast(days: int, column: str):
         macro_data = MultivariateTimeSeries.ml_process()
+        features = macro_data.columns.tolist()
+        logger.info(f"Features: {features}")
         macro_data = macro_data[features]
         logger.info(macro_data.shape)
-        train_df=macro_data[:-12]
-        test_df=macro_data[-12:]
-        #
-        model = VAR(train_df.diff()[1:])
-        sorted_order=model.select_order(maxlags=20)
-        logger.info(sorted_order.summary())
-        #
-        var_model = VARMAX(train_df, order=(4,0),enforce_stationarity= True)
-        fitted_model = var_model.fit(disp=False)
+        
+        # Ensure all data is numeric
+        macro_data = macro_data.apply(pd.to_numeric, errors='coerce')
+        logger.info(macro_data.dtypes)
+        
+        for feature in features:
+            if macro_data[feature].nunique() == 1:
+                logger.warning(f"Feature {feature} is constant and will be excluded.")
+                macro_data = macro_data.drop(columns=[feature])
+            elif not MultivariateTimeSeries.check_stationarity(macro_data[feature]):
+                logger.warning(f"Feature {feature} is not stationary. Differencing the data.")
+                macro_data[feature] = macro_data[feature].diff().dropna()
+        
+        macro_data = macro_data.dropna()
+        
+        if macro_data.shape[1] < 2:
+            logger.error("Not enough features left after filtering for stationarity and constant series.")
+            return None
+        
+        train_df = macro_data[:-12]
+        test_df = macro_data[-12:]
+        
+        logger.info(train_df.head())
+        logger.info(train_df.info())
+        
+        corr_matrix = train_df.corr().abs()
+        upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
+        high_corr_features = [column for column in upper.columns if any(upper[column] > 0.9)]
+        if high_corr_features:
+            logger.warning(f"High multicollinearity detected among features: {high_corr_features}")
+            train_df = train_df.drop(columns=high_corr_features)
+        
+        if train_df.isnull().sum().sum() > 0:
+            logger.error("Missing values detected in train_df.")
+            train_df = train_df.dropna()
+
+        try:
+            model = VAR(train_df.diff().dropna())
+            sorted_order = model.select_order(maxlags=20)
+            logger.info(sorted_order.summary())
+        except np.linalg.LinAlgError as e:
+            logger.error(f"LinAlgError during select_order: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Exception during select_order: {e}")
+            return None
+        
+        reduced_order = (1, 0)
+        var_model = VARMAX(train_df, order=reduced_order, enforce_stationarity=True)
+        logger.info(f"Fitting VARMAX model with order {reduced_order}...")
+
+        signal.signal(signal.SIGALRM, MultivariateTimeSeries.handler)
+        signal.alarm(60 * 10)
+
+        try:
+            fitted_model = var_model.fit(disp=True)
+            signal.alarm(0)
+        except TimeoutException:
+            logger.error("Fitting VARMAX model timed out.")
+            return None
+        except Exception as e:
+            logger.error(f"Error fitting VARMAX model: {e}")
+            return None
+
         logger.info(fitted_model.summary())
-        # Forecasting future 7 days
-        n_forecast = 1 * 24 * 60  # Number of minutes in 7 days (assuming minutely data)
+        
+        n_forecast = days * 24 * 60
         predict = fitted_model.get_prediction(start=len(train_df), end=len(train_df) + n_forecast - 1)
-        # Extracting predicted values
         predictions = predict.predicted_mean
+        
+        plot = False
         if plot:
             for x in features:
-                fig, ax = plt.subplots(figsize=(12, 5))
-                ax.plot(train_df.index, train_df[x], label='Train Data (' + x + ')', color='blue')
-                ax.plot(test_df.index, test_df[x], label='Test Data (' + x + ')', color='green')
-                ax.plot(predictions.index, predictions[x], label='Predicted Data (' + x + ')', color='red')
-                ax.legend()
-                plt.title('VARMAX Model Predictions vs Actual Data (' + x + ')')
-                plt.xlabel('Time')
-                plt.ylabel('Value')
-                plt.show()
-        logger.info(predictions)
-        return predictions
-            
+                if x in predictions.columns:
+                    fig, ax = plt.subplots(figsize=(12, 5))
+                    ax.plot(train_df.index, train_df[x], label=f'Train Data ({x})', color='blue')
+                    ax.plot(test_df.index, test_df[x], label=f'Test Data ({x})', color='green')
+                    ax.plot(predictions.index, predictions[x], label=f'Predicted Data ({x})', color='red')
+                    ax.legend()
+                    plt.title(f'VARMAX Model Predictions vs Actual Data ({x})')
+                    plt.xlabel('Time')
+                    plt.ylabel('Value')
+                    plt.show()
+        
+        logger.info(predictions.head())
+        logger.info(predictions.shape)
+        logger.info(predictions.info())
+        
+        feature_importances_dict = MultivariateTimeSeries.feature_selection(column, predictions)
+        
+        # Pair the features with their importances
+        features_with_importances = list(zip(feature_importances_dict['features'], feature_importances_dict['importance']))
 
-if __name__ == '__main__':
-    # MultivariateTimeSeries.ml_process()
+        # Sort the pairs by importance values in descending order
+        sorted_features = sorted(features_with_importances, key=lambda x: x[1], reverse=True)
+
+        # Extract the top 3 features
+        top_3_features = [feature for feature, importance in sorted_features[:3]]
+
+        # Ensure the additional feature is not already in the top features
+        if column not in top_3_features:
+            # Append the additional feature to the list
+            top_features_with_additional = top_3_features + [column]
+        else:
+            # If already present, keep the top 3 features list as is
+            top_features_with_additional = top_3_features
     
-    columns = ['cpuusedpercent', 'cpu_user']
-    # MultivariateTimeSeries.casual('cpuusedpercent', 'cpu_user')
+        prid_dict_list = MultivariateTimeSeries.convert_to_dict(predictions, top_features_with_additional)
+        logger.info(f"Feature importance dictionary: {feature_importances_dict}")
+        logger.info(f"{prid_dict_list[0].keys()}")
+        return prid_dict_list, feature_importances_dict
     
-    # ['server_name_abels-mbp.zte.com.cn_sa', 'physical_mem_free',
-    #    'page_file_usage', 'processes', 'tcp_connections', 'cpu_user',
-    #    'cpu_sys', 'is_windows_N', 'sys_load', 'swap_mem_usage', 'cpu_io',
-    #    'cpu_max', 'cpu_nice', 'swap_pagein', 'swap_pageout', 'server_id',
-    #    'cpuusedpercent', 'mem_used', 'mem_used_per']
-      
-    # predictions, test_df, features = MultivariateTimeSeries.validation_ml(features=columns)
-    # MultivariateTimeSeries.sklearn_metrics(predictions, test_df, features=features)
-    forcast = MultivariateTimeSeries.forcast(features=columns, plot=True)
+    @staticmethod
+    def convert_to_dict(df: pd.DataFrame, column_names: list):
+        # Validate column_names
+        for column_name in column_names:
+            if column_name not in df.columns:
+                raise ValueError(f"Column '{column_name}' not found in DataFrame.")
+        # Initialize the list to store the dictionaries
+        dict_list = []
+        # Create a dictionary for each column
+        for column_name in column_names:
+            column_dict = {
+                'date': df.index.strftime('%Y-%m-%d %H:%M:%S').tolist(),
+                column_name: df[column_name].tolist()
+            }
+            dict_list.append(column_dict)
+        return dict_list
+    
+    @staticmethod
+    def get_dropdowns():
+        macro_data = MultivariateTimeSeries.ml_process()
+        columns = macro_data.columns.tolist()
+        dropdown_data = [{"value": col, "label": col} for col in columns]
+        return dropdown_data
+    
+    
+    
+class TimeoutException(Exception):
+        pass
+               
+
+# if __name__ == '__main__':
+#     forecast = MultivariateTimeSeries.forcast(days=1, column="cpuusedpercent")
+    
+ 
+
+
+    
+ 
     

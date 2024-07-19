@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from app.api.api_v1.handlers import fetchData
+from app.api.api_v1.handlers import forecast
 
 router = APIRouter()
 
-router.include_router(fetchData.fetch_data, prefix='/fetch_data', tags=["data"])
+router.include_router(forecast.api, prefix='/varmax', tags=["varmax"])

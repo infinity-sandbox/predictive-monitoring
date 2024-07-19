@@ -11,8 +11,6 @@ services:
       - 8000
     ports:
       - "8000:8000"
-    # volumes:
-    #   - ./server/logs:/backend/logs
     environment:
       MYSQL_DB_HOST: host.docker.internal  # Use host.docker.internal to refer to host machine
       MYSQL_DB_PORT: ${MYSQL_DB_PORT}  # Port 3306 is the default for MySQL
