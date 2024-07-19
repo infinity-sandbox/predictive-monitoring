@@ -14,10 +14,10 @@ Dashboard Guide
 
 4. **Dashboard Layout**  
    The dashboard is divided into two sections:
-   - **Top Section**  
+   - Top Section
      On the left, you will see the prediction line chart for the selected column. On the right, the dashboard displays causal features that directly impact the predictions for the selected column.
    
-   - **Bottom Section**  
+   - Bottom Section
      This area features three line charts representing the predictions for the causes related to the selected column.
 
 NOTE: 
