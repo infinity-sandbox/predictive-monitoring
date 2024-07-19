@@ -25,7 +25,7 @@
   margin-top: 20px;
 }
 
-.main-chart, .side-chart, .line-chart {
+.main-chart, .side-chart {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -40,5 +40,12 @@
 }
 
 .line-chart {
-  height: 300px;
+  height: 800px;
+}
+
+.line-chart {
+  display: felx;
+  width: 100%;
+  padding: 0;
+  margin-bottom: 16px;
 }

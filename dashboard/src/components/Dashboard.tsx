@@ -61,15 +61,15 @@ const Dashboard: React.FC = () => {
 //   };
 
 const colors: { [key: string]: string } = {
-    predictions: '#318CE7', // Orange
+    predictions: '#318CE7', // Blue
     train: '#318CE7',      // Green
-    test: '#318CE7'        // Blue
+    test: '#318CE7'        // Orange
   };
   
   const renderLineChart = (dataList: DataWithDate[], type: string) => {
     // Extract dates from the first entry
     const labels = dataList[0]?.date || [];
-    
+  
     // Create datasets for each column in the dataList
     const datasets = dataList.flatMap((data, index) => {
       // Determine the dataset type based on the index
@@ -77,12 +77,21 @@ const colors: { [key: string]: string } = {
       return Object.keys(data)
         .filter(key => key !== 'date') // Exclude the 'date' key
         .map((colName) => ({
-          label: `${datasetType.charAt(0).toUpperCase() + datasetType.slice(1)} (${colName})`,
+          label: `${colName} (${datasetType.charAt(0).toUpperCase() + datasetType.slice(1)})`,
           data: data[colName] as number[], // Cast to number array
           borderColor: colors[datasetType] || '#318CE7', // Use color based on dataset type, default to blue
           backgroundColor: 'rgba(0,0,0,0)',
           borderWidth: 2,
+          columnName: colName // Assign column name to the dataset for later use
         }));
+    });
+  
+    // Collect unique column names manually
+    const columnNames: string[] = [];
+    datasets.forEach(dataset => {
+      if (!columnNames.includes(dataset.columnName)) {
+        columnNames.push(dataset.columnName);
+      }
     });
     
     return (
@@ -93,6 +102,20 @@ const colors: { [key: string]: string } = {
         }}
         options={{
           responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: `Data for ${columnNames.join(', ')}`, // Use column names for the title
+              font: {
+                size: 16,
+                weight: 'bold',
+              },
+              padding: {
+                top: 10,
+                bottom: 20,
+              }
+            }
+          },
           scales: {
             x: { 
               beginAtZero: false,
@@ -114,15 +137,18 @@ const colors: { [key: string]: string } = {
     );
   };
   
+  
+  
+    
   const renderBarChart = (causes: { features: string[]; importance: number[] }) => {
     return (
       <Bar
         data={{
           labels: causes.features,
           datasets: [{
-            label: 'Importance',
+            label: 'Causes',
             data: causes.importance,
-            backgroundColor: '#318CE7', // Green for bar chart
+            backgroundColor: '#318CE7',
           }],
         }}
         options={{
