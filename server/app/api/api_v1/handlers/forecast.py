@@ -8,15 +8,12 @@ from fastapi import APIRouter
 from app.models.parameters import PredictionRequest, ForecastResponse, DropdownItem
 from typing import List, Dict, Optional
 
-
 api = APIRouter()
 
-
-
-@api.get("/forecaster")
+@api.post("/forecaster")
 async def forecast(request: PredictionRequest):
-    predictions, causes = MultivariateTimeSeries.forecast(request.days, request.column)
-    return ForecastResponse(predictions=predictions, causes=causes)
+    predictions, causes, train, test = MultivariateTimeSeries.forecast(request.days, request.column)
+    return ForecastResponse(predictions=predictions, causes=causes, train=train, test=test)
 
 @api.get("/dropdown_data", response_model=List[DropdownItem])
 async def get_dropdown_data():

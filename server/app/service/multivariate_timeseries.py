@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from statsmodels.tsa.statespace.varmax import VARMAX
 from statsmodels.tsa.api import VAR
@@ -7,13 +8,10 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
-from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator # type: ignore
-import tensorflow as tf
 from datetime import datetime, timedelta
 import random as rd
 import pandas as pd
 from sklearn.preprocessing import OneHotEncoder
-from tqdm import tqdm_notebook
 from itertools import product
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
@@ -30,11 +28,6 @@ warnings.filterwarnings('ignore')
 load_dotenv()
 from logs.loggers.logger import logger_config
 logger = logger_config(__name__)
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from statsmodels.tsa.api import VAR, VARMAX
-from statsmodels.tsa.stattools import adfuller
 import logging
 import signal
 
@@ -181,29 +174,6 @@ class MultivariateTimeSeries:
             logger.info('Mean value of {} is : {}. Root Mean Squared Error is :{}'.format(features[i],mean(test_df[features[i]]),rmse))
         return predictions, test_df, features
         
-    # @staticmethod
-    # def forcast(feature1: str, feature2: str, days: int = 7):
-    #     macro_data = MultivariateTimeSeries.ml_process()
-    #     macro_data = macro_data[[feature1, feature2]]
-    #     logger.info(macro_data.shape)
-    #     train_df=macro_data[:-12]
-    #     test_df=macro_data[-12:]
-    #     #
-    #     model = VAR(train_df.diff()[1:])
-    #     sorted_order=model.select_order(maxlags=20)
-    #     logger.info(sorted_order.summary())
-    #     #
-    #     var_model = VARMAX(train_df, order=(4,0),enforce_stationarity= True)
-    #     fitted_model = var_model.fit(disp=False)
-    #     logger.info(fitted_model.summary())
-    #     # Forecasting future 7 days
-    #     n_forecast = days * 24 * 60  # Number of minutes in 7 days (assuming minutely data)
-    #     predict = fitted_model.get_prediction(start=len(train_df), end=len(train_df) + n_forecast - 1)
-    #     # Extracting predicted values
-    #     predictions = predict.predicted_mean
-    #     logger.info(predictions.head())
-    #     return predictions
-    
     @staticmethod
     def check_stationarity(series):
         if series.nunique() == 1:
@@ -253,11 +223,9 @@ class MultivariateTimeSeries:
         logger.info(f"Features: {features}")
         macro_data = macro_data[features]
         logger.info(macro_data.shape)
-        
         # Ensure all data is numeric
         macro_data = macro_data.apply(pd.to_numeric, errors='coerce')
         logger.info(macro_data.dtypes)
-        
         for feature in features:
             if macro_data[feature].nunique() == 1:
                 logger.warning(f"Feature {feature} is constant and will be excluded.")
@@ -265,19 +233,14 @@ class MultivariateTimeSeries:
             elif not MultivariateTimeSeries.check_stationarity(macro_data[feature]):
                 logger.warning(f"Feature {feature} is not stationary. Differencing the data.")
                 macro_data[feature] = macro_data[feature].diff().dropna()
-        
         macro_data = macro_data.dropna()
-        
         if macro_data.shape[1] < 2:
             logger.error("Not enough features left after filtering for stationarity and constant series.")
             return None
-        
         train_df = macro_data[:-12]
         test_df = macro_data[-12:]
-        
         logger.info(train_df.head())
         logger.info(train_df.info())
-        
         corr_matrix = train_df.corr().abs()
         upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
         high_corr_features = [column for column in upper.columns if any(upper[column] > 0.9)]
@@ -288,7 +251,6 @@ class MultivariateTimeSeries:
         if train_df.isnull().sum().sum() > 0:
             logger.error("Missing values detected in train_df.")
             train_df = train_df.dropna()
-
         try:
             model = VAR(train_df.diff().dropna())
             sorted_order = model.select_order(maxlags=20)
@@ -299,14 +261,11 @@ class MultivariateTimeSeries:
         except Exception as e:
             logger.error(f"Exception during select_order: {e}")
             return None
-        
         reduced_order = (1, 0)
         var_model = VARMAX(train_df, order=reduced_order, enforce_stationarity=True)
         logger.info(f"Fitting VARMAX model with order {reduced_order}...")
-
         signal.signal(signal.SIGALRM, MultivariateTimeSeries.handler)
         signal.alarm(60 * 10)
-
         try:
             fitted_model = var_model.fit(disp=True)
             signal.alarm(0)
@@ -316,13 +275,10 @@ class MultivariateTimeSeries:
         except Exception as e:
             logger.error(f"Error fitting VARMAX model: {e}")
             return None
-
         logger.info(fitted_model.summary())
-        
         n_forecast = days * 24 * 60
         predict = fitted_model.get_prediction(start=len(train_df), end=len(train_df) + n_forecast - 1)
         predictions = predict.predicted_mean
-        
         plot = False
         if plot:
             for x in features:
@@ -336,22 +292,19 @@ class MultivariateTimeSeries:
                     plt.xlabel('Time')
                     plt.ylabel('Value')
                     plt.show()
-        
         logger.info(predictions.head())
         logger.info(predictions.shape)
         logger.info(predictions.info())
-        
+        if column not in predictions.columns:
+            logger.error(f"Column '{column}' not found in predictions.")
+            return HTTPException(status_code=404, detail=f"Column '{column}' not found in predictions.")
         feature_importances_dict = MultivariateTimeSeries.feature_selection(column, predictions)
-        
         # Pair the features with their importances
         features_with_importances = list(zip(feature_importances_dict['features'], feature_importances_dict['importance']))
-
         # Sort the pairs by importance values in descending order
         sorted_features = sorted(features_with_importances, key=lambda x: x[1], reverse=True)
-
         # Extract the top 3 features
         top_3_features = [feature for feature, importance in sorted_features[:3]]
-
         # Ensure the additional feature is not already in the top features
         if column not in top_3_features:
             # Append the additional feature to the list
@@ -359,11 +312,12 @@ class MultivariateTimeSeries:
         else:
             # If already present, keep the top 3 features list as is
             top_features_with_additional = top_3_features
-    
         prid_dict_list = MultivariateTimeSeries.convert_to_dict(predictions, top_features_with_additional)
+        train_dict_list = MultivariateTimeSeries.convert_to_dict(train_df, top_features_with_additional)
+        test_dict_list = MultivariateTimeSeries.convert_to_dict(test_df, top_features_with_additional)
         logger.info(f"Feature importance dictionary: {feature_importances_dict}")
         logger.info(f"{prid_dict_list[0].keys()}")
-        return prid_dict_list, feature_importances_dict
+        return prid_dict_list, feature_importances_dict, train_dict_list, test_dict_list
     
     @staticmethod
     def convert_to_dict(df: pd.DataFrame, column_names: list):
@@ -389,18 +343,8 @@ class MultivariateTimeSeries:
         dropdown_data = [{"value": col, "label": col} for col in columns]
         return dropdown_data
     
-    
-    
 class TimeoutException(Exception):
         pass
                
-
 # if __name__ == '__main__':
 #     forecast = MultivariateTimeSeries.forcast(days=1, column="cpuusedpercent")
-    
- 
-
-
-    
- 
-    

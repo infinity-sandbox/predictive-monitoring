@@ -9,6 +9,8 @@ class PredictionRequest(BaseModel):
 class ForecastResponse(BaseModel):
     predictions: List[Dict]
     causes: Dict
+    train: List[Dict]
+    test: List[Dict]
     
 class DropdownItem(BaseModel):
     value: str

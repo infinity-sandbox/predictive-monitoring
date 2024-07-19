@@ -7,12 +7,10 @@ logger = logger_config(__name__)
 from app.api.api_v1.router import router
 from fastapi.responses import JSONResponse
 
-
 app = FastAPI(
     title="applicare os monitoring api",
     openapi_url=f"/api/v1/openapi.json"
 )
-
 
 app.add_middleware(
     CORSMiddleware,
