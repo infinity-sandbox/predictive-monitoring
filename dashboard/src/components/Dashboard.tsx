@@ -53,11 +53,17 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Define colors and their types
+// NOTE: uncomment this block if you want d/t shades of color
+// const colors: { [key: string]: string } = {
+//     predictions: '#ff5733', // Orange
+//     train: '#33ff57',      // Green
+//     test: '#3357ff'        // Blue
+//   };
+
 const colors: { [key: string]: string } = {
-    predictions: '#ff5733', // Orange
-    train: '#33ff57',      // Green
-    test: '#3357ff'        // Blue
+    predictions: '#318CE7', // Orange
+    train: '#318CE7',      // Green
+    test: '#318CE7'        // Blue
   };
   
   const renderLineChart = (dataList: DataWithDate[], type: string) => {

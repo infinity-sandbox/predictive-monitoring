@@ -246,11 +246,10 @@ class MultivariateTimeSeries:
         # logger.info(train_df.head())
         # logger.info(train_df.info())
         # Split data into training and testing based on time
-        # Split data into training and testing based on time
-        # TODO: comment this
-        train_size = int(len(macro_data) * 0.1)  # Calculate 70% of the data length
-        train_df = macro_data.iloc[:train_size]  # Use the first 70% for training
-        test_df = macro_data.iloc[train_size:]   # Use the remaining 30% for testing
+        # NOTE: this is just for testing purposes
+        train_size = int(len(macro_data) * 0.1) 
+        train_df = macro_data.iloc[:train_size] 
+        test_df = macro_data.iloc[train_size:]
         #
         corr_matrix = train_df.corr().abs()
         upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
