@@ -7,13 +7,13 @@ WORKDIR /frontend
 # Copy package.json and package-lock.json to the working directory
 COPY ./dashboard/package*.json /frontend/
 COPY ./dashboard/tsconfig.json /frontend/
-COPY ./dashboard/ /frontend/
+# COPY ./dashboard/ /frontend/
 
 # Clean npm cache and install dependencies with verbose logging
 RUN npm install
 
 # Uncomment this if you want to use caching
-# COPY ./dashboard/ /frontend/
+COPY ./dashboard/ /frontend/
 
 # Expose port 3000 (the default port for create-react-app)
 EXPOSE 3000

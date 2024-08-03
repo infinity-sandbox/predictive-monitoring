@@ -28,7 +28,6 @@ warnings.filterwarnings('ignore')
 load_dotenv()
 from logs.loggers.logger import logger_config
 logger = logger_config(__name__)
-import logging
 import signal
 
 
@@ -240,15 +239,38 @@ class MultivariateTimeSeries:
         macro_data = macro_data.dropna()
         if macro_data.shape[1] < 2:
             logger.error("Not enough features left after filtering for stationarity and constant series.")
-            return None
+            return None, None, None, None
+        
+        
+        # Define thresholds
+        small_data_threshold = 3000
+        large_data_threshold = 10000
+
+        def calculate_maxlags(num_observations, max_lags_for_small_data=10, max_lags_for_large_data=20):
+            if num_observations <= small_data_threshold:
+                logger.debug("Small dataset detected.")
+                # For small datasets
+                return min(max_lags_for_small_data, num_observations - 1)
+            elif num_observations >= large_data_threshold:
+                logger.debug("Large dataset detected.")
+                # For large datasets
+                return min(max_lags_for_large_data, num_observations // 4)
+            else:
+                logger.debug("Medium dataset detected.")
+                # For medium datasets
+                return min(num_observations // 4, num_observations - 1)
+        # NOTE: this is just for testing purposes (selects small portion of data)
         # train_df = macro_data[:-12]
         # test_df = macro_data[-12:]
         # logger.info(train_df.head())
         # logger.info(train_df.info())
         # Split data into training and testing based on time
-        # NOTE: this is just for testing purposes
-        train_size = int(len(macro_data) * 0.1) 
-        train_df = macro_data.iloc[:train_size] 
+        # DEBUG:remove this line when deploying (proven this casues maxlags too large error)
+        # macro_data = macro_data.iloc[:1298]
+        # TODO: increase the percentage of data used for training
+        TRAIN_PERC = 0.2 # 10% of data used for training
+        train_size = int(len(macro_data) * TRAIN_PERC)
+        train_df = macro_data.iloc[:train_size]
         test_df = macro_data.iloc[train_size:]
         #
         corr_matrix = train_df.corr().abs()
@@ -262,15 +284,32 @@ class MultivariateTimeSeries:
             logger.error("Missing values detected in train_df.")
             train_df = train_df.dropna()
         try:
+            # Ensure your train_df is defined and contains the correct data
+            num_observations = train_df.shape[0]
+            num_equations = train_df.shape[1]
+            logger.debug(f"ROWS -> (Number of observations): {num_observations}")
+            logger.debug(f"COLUMNS -> Number of equations: {num_equations}")
+            # Calculate maxlags as a fraction of the number of observations
+            # maxlags = min(20, num_observations // 4)
+            # maxlags = min(10, num_observations // 4, num_observations - 1)
+            maxlags = calculate_maxlags(num_observations)
+            logger.debug(f"Maxlags: {maxlags}")
+            
+            # Ensure maxlags is positive and less than the number of observations
+            if maxlags <= 0:
+                logger.error(f"Calculated maxlags is too small: {maxlags}")
+                return None, None, None, None
+            
+            # Fit the VAR model
             model = VAR(train_df.diff().dropna())
-            sorted_order = model.select_order(maxlags=20)
+            sorted_order = model.select_order(maxlags=maxlags)
             logger.info(sorted_order.summary())
         except np.linalg.LinAlgError as e:
             logger.error(f"LinAlgError during select_order: {e}")
-            return None
+            return None, None, None, None
         except Exception as e:
             logger.error(f"Exception during select_order: {e}")
-            return None
+            return None, None, None, None
         reduced_order = (1, 0)
         var_model = VARMAX(train_df, order=reduced_order, enforce_stationarity=True)
         logger.info(f"Fitting VARMAX model with order {reduced_order}...")
@@ -281,10 +320,10 @@ class MultivariateTimeSeries:
             signal.alarm(0)
         except TimeoutException:
             logger.error("Fitting VARMAX model timed out.")
-            return None
+            return None, None, None, None
         except Exception as e:
             logger.error(f"Error fitting VARMAX model: {e}")
-            return None
+            return None, None, None, None
         logger.info(fitted_model.summary())
         n_forecast = days * 24 * 60
         predict = fitted_model.get_prediction(start=len(train_df), end=len(train_df) + n_forecast - 1)
@@ -356,5 +395,7 @@ class MultivariateTimeSeries:
 class TimeoutException(Exception):
         pass
                
-# if __name__ == '__main__':
-#     forecast = MultivariateTimeSeries.forcast(days=1, column="cpuusedpercent")
+if __name__ == '__main__':
+    forecast = MultivariateTimeSeries.forcast(days=1, column="cpuusedpercent")
+    logger.info(f"forecast success: {forecast}")
+    

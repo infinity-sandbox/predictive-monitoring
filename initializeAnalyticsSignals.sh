@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Stopping backend container..."
-docker-compose -f docker-compose.yml down --timeout 60 osai_backend
+docker-compose -f docker-compose.yml down --timeout 30 osai_backend
 
 echo "Building backend container..."
 docker-compose -f docker-compose.yml build osai_backend
@@ -14,7 +14,7 @@ echo "Backend container installed successfully!"
 #
 
 echo "Stopping frontend container..."
-docker-compose -f docker-compose.yml down --timeout 60 osai_frontend
+docker-compose -f docker-compose.yml down --timeout 30 osai_frontend
 
 echo "Building frontend container..."
 docker-compose -f docker-compose.yml build osai_frontend
