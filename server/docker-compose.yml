@@ -17,3 +17,4 @@ services:
       MYSQL_DB_USER: ${MYSQL_DB_USER}
       MYSQL_DB_PASSWORD: ${MYSQL_DB_PASSWORD}
       MYSQL_DB: ${MYSQL_DB}
+      MONGO_CONNECTION_STRING: mongodb://host.docker.internal:27017

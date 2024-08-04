@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Header, status
-from app.service.multivariate_timeseries import MultivariateTimeSeries
+from app.services.multivariate_timeseries import MultivariateTimeSeries
 from fastapi.responses import JSONResponse
 from fastapi import APIRouter, Depends, FastAPI
 from logs.loggers.logger import logger_config

@@ -18,7 +18,7 @@ auth_router = APIRouter()
 
 @auth_router.post('/login', summary="Create access and refresh tokens for user", response_model=TokenSchema)
 async def login(form_data: OAuth2PasswordRequestForm = Depends()) -> Any:
-    logger.debug(f"This is the formdata: {form_data}")
+    logger.debug(f"This is the form/login data: {form_data}")
     logger.debug(f"Authenticating user with email: {form_data.username} and password {form_data.password} ...")
     user = await UserService.authenticate(email=form_data.username, password=form_data.password)
     if not user:

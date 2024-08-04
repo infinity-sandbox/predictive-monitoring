@@ -19,7 +19,7 @@ class Settings(BaseSettings):
                                               "http://0.0.0.0:3000",
                                               "http://0.0.0.0",
                                               "http://0.0.0.0:8000",
-                                              "https://aibou.vercel.app"]
+                                            ]
     PROJECT_NAME: str = "OSAI"
     MONGO_CONNECTION_STRING: str = config("MONGO_CONNECTION_STRING", cast=str)
     OPENAI_API_KEY: str = config("OPENAI_API_KEY", cast=str)
@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     MY_EMAIL_PASSWORD: str = config("MY_EMAIL_PASSWORD", cast=str)
     EMAIL_APP_PASSWORD: str = config("EMAIL_APP_PASSWORD", cast=str)
     MODEL: str = config("MODEL", cast=str)
+    MYSQL_DB_USER: str = config("MYSQL_DB_USER", cast=str)
+    MYSQL_DB_PASSWORD: str = config("MYSQL_DB_PASSWORD", cast=str)
+    MYSQL_DB_HOST: str = config("MYSQL_DB_HOST", cast=str)
+    MYSQL_DB: str = config("MYSQL_DB", cast=str)
+    MYSQL_DB_PORT: str = config("MYSQL_DB_PORT", cast=str)
     
     class Config:
         case_sensitive = True

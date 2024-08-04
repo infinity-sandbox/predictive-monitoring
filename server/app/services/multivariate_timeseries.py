@@ -29,6 +29,7 @@ load_dotenv()
 from logs.loggers.logger import logger_config
 logger = logger_config(__name__)
 import signal
+from app.core.config import settings
 
 
 class MultivariateTimeSeries:
@@ -37,11 +38,11 @@ class MultivariateTimeSeries:
         try:
             # Database connection details
             config = {
-                'user': os.getenv('MYSQL_DB_USER'),
-                'password': os.getenv('MYSQL_DB_PASSWORD'),
-                'host': os.getenv('MYSQL_DB_HOST'),
-                'database': os.getenv('MYSQL_DB'),
-                'port': os.getenv('MYSQL_DB_PORT', '3306')
+                'user': settings.MYSQL_DB_USER,
+                'password': settings.MYSQL_DB_PASSWORD,
+                'host': settings.MYSQL_DB_HOST,
+                'database': settings.MYSQL_DB,
+                'port': settings.MYSQL_DB_PORT
             }
             # Establish the connection
             connection = mysql.connector.connect(**config)
