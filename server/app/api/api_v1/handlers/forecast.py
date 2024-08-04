@@ -19,3 +19,4 @@ async def forecast(request: PredictionRequest):
 async def get_dropdown_data():
     dropdowns = MultivariateTimeSeries.get_dropdowns()
     return dropdowns
+

@@ -4,7 +4,7 @@ services:
     container_name: osai_backend
     build:
         context: ./
-        dockerfile: server/dockerfile.osai_backend
+        dockerfile: dockerfile.osai_backend
     image: osai_backend:latest
     restart: unless-stopped
     expose:
@@ -17,15 +17,3 @@ services:
       MYSQL_DB_USER: ${MYSQL_DB_USER}
       MYSQL_DB_PASSWORD: ${MYSQL_DB_PASSWORD}
       MYSQL_DB: ${MYSQL_DB}
-  osai_frontend:
-    container_name: osai_frontend
-    build:
-        context: ./
-        dockerfile: dashboard/dockerfile.osai_frontend
-    image: osai_frontend:latest
-    restart: unless-stopped
-    expose:
-      - 3000 
-    ports:
-      - "3000:3000"
-      

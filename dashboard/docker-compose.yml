@@ -1,0 +1,14 @@
+version: "3"
+services:
+  osai_frontend:
+    container_name: osai_frontend
+    build:
+        context: ./
+        dockerfile: dockerfile.osai_frontend
+    image: osai_frontend:latest
+    restart: unless-stopped
+    expose:
+      - 3000
+    ports:
+      - "3000:3000"
+      
