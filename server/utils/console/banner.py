@@ -10,7 +10,7 @@ _MAIN_BANNER = r"""{}
 /_/   \_\ .__/| .__/|_|_|\___\__,_|_|  \___| /_/   \_\___|
         |_|   |_|                                         
 
-""".format(IO.Fore.LIGHTGREEN_EX, IO.Style.RESET_ALL + IO.Style.BRIGHT)                                    
+""".format(IO.Fore.LIGHTRED_EX, IO.Style.RESET_ALL + IO.Style.BRIGHT)                                    
 
 def get_main_banner(banner=_MAIN_BANNER):
     return banner
