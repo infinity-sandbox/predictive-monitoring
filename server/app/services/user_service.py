@@ -86,6 +86,7 @@ class UserService:
         access_token = UserService.create_access_token(
             data={"sub": email}, expires_delta=access_token_expires
         )
+        logger.debug(f'Access token from email resent:\n{access_token}')
         reset_link = f"{settings.FRONTEND_API_URL}/reset/password?token={access_token}"
         # Send the reset link to the user's email
         logger.debug(f"Reset link: {reset_link}")
@@ -98,15 +99,18 @@ class UserService:
     @staticmethod
     async def reset_password(token: str, new_password: str):
         try:
+            logger.debug(f'Reset token: {token}, New password: {new_password}')
             payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[
                                  settings.ALGORITHM])
             email = payload.get("sub")
+            logger.debug(f"payload fetched sucessfully {payload}, and email: {email}")
             if email is None:
                 raise HTTPException(status_code=400, detail="Invalid token")
         except jwt.PyJWTError:
             raise HTTPException(status_code=400, detail="Invalid token")
 
         user = await UserService.get_user_by_email(email)
+        logger.debug(f'user found {user}')
         if not user:
             raise HTTPException(status_code=400, detail="User not found")
 
@@ -114,6 +118,7 @@ class UserService:
         data = {"hashed_password": hashed_password}
 
         await user.update({"$set": data})
+        logger.debug(f'Password reset successful with the update function.')
         return {"msg": "Password reset successful"}
 
     @staticmethod
@@ -122,7 +127,7 @@ class UserService:
             # Email details
             sender_email = settings.MY_EMAIL
             receiver_email = email
-            subject = "PASSWORD RESET LINK REQUEST: AI BOU"
+            subject = "PASSWORD RESET LINK REQUEST: Applicare OS AI"
             body = f"Password Reset Link:\n{reset_link}"
 
             # Create the email message
