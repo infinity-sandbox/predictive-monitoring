@@ -1,0 +1,22 @@
+.success-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Adjust as necessary */
+  }
+
+.success-login-button {
+    margin-top: 20px;
+    width: 40%;
+    height: 30px;
+    background-color: #1591ea;
+    color: white;
+    font-size: 15px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+
+.success-login-button:hover {
+    background-color: #3689c4;
+}

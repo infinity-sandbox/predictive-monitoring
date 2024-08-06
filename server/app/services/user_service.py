@@ -76,7 +76,7 @@ class UserService:
         return user
 
     @staticmethod
-    async def send_email_request(email: str, problem: str, timestamps: list):
+    async def _send_email_request(email: str, problem: str, timestamps: list):
         user = await UserService.get_user_by_email(email)
         if not user:
             raise pymongo.errors.OperationFailure(
@@ -99,7 +99,7 @@ class UserService:
         link = f"{settings.FRONTEND_API_URL}/dashboard?{encoded_params}"
         # Send the reset link to the user's email
         logger.debug(f"Dashboard Link: {link}")
-        status = UserService.send_email(email, problem, link, timestamps)
+        status = UserService._send_email(email, problem, link, timestamps)
         if status:
             return logger.debug("Password reset email sent!")
         else:
@@ -131,7 +131,7 @@ class UserService:
         return {"msg": "Password reset successful"}
 
     @staticmethod
-    async def send_email(email: str, problem: str, link: str, timestamp: list):
+    async def _send_email(email: str, problem: str, link: str, timestamp: list):
         try:
             # Email details
             sender_email = settings.MY_EMAIL
@@ -205,4 +205,54 @@ class UserService:
                 detail="Invalid token for user",
             )
         return user
+    
+    staticmethod
+    async def send_email_request(email: str):
+        user = await UserService.get_user_by_email(email)
+        if not user:
+            raise pymongo.errors.OperationFailure(
+                "User not found or this email is not registered!")
+        access_token_expires = timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+
+        access_token = UserService.create_access_token(
+            data={"sub": email}, expires_delta=access_token_expires
+        )
+        reset_link = f"{settings.FRONTEND_API_URL}/reset/password?token={access_token}"
+        # Send the reset link to the user's email
+        logger.debug(f"Reset link: {reset_link}")
+        status = UserService.send_email(email, reset_link)
+        if status:
+            return logger.debug("Password reset email sent!")
+        else:
+            return logger.debug("Password reset email not sent!")
+        
+    staticmethod
+    def send_email(email: str, reset_link):
+        try:
+            # Email details
+            sender_email = settings.MY_EMAIL
+            receiver_email = email
+            subject = "PASSWORD RESET LINK REQUEST: Applicare OS AI"
+            body = f"Password Reset Link:\n{reset_link}"
+
+            # Create the email message
+            message = MIMEMultipart()
+            message["From"] = sender_email
+            message["To"] = receiver_email
+            message["Subject"] = subject
+            message.attach(MIMEText(body, "plain"))
+            # Convert the message to a string
+            email_string = message.as_string()
+
+            server = smtplib.SMTP("smtp.gmail.com", 587)
+            server.starttls()
+            server.login(settings.MY_EMAIL, settings.EMAIL_APP_PASSWORD)
+            server.sendmail(settings.MY_EMAIL, email, email_string)
+            return True
+        except Exception as e:
+            logger.error(f"Error: {e}")
+            return False
+        finally:
+            server.quit()
     

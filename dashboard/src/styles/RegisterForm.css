@@ -1,0 +1,107 @@
+.RegisterPageAll {
+    display: flex;
+    min-height: 100vh;
+    overflow: hidden; /* Prevents any overflow */
+}
+
+.register-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Push content to top and bottom */
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+    background-color: #fff;
+    height: 100%;
+    box-sizing: border-box; /* Include padding in the element's total width and height */
+}
+
+.register-form {
+    display: flex;
+    flex-direction: column; /* Stack items vertically */
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: white;
+    padding: 2em;
+    flex: 1; /* Take the available space above the button */
+    box-sizing: border-box; /* Include padding in the element's total width and height */
+}
+
+.register-form h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.register-form .ant-form-item {
+    margin-bottom: 16px;
+}
+
+.register-form .register-button {
+    width: 100%;
+    background-color: #1591ea;
+    color: #ffffff;
+    border: none;
+    border-radius: 5rem;
+    height: 50px;
+    font-weight: 600;
+    font-size: 20px;
+    margin-top: 1em; /* Add space above the button */
+}
+
+.register-form .login-link {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.logo {
+    display: flex;
+    margin-left: 50px;
+}
+
+.logo h1 {
+    color: #10598d;
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
+
+.createAccount {
+    font-family: 'URW Bookman', 'URW Bookman L', 'Georgia Pro', Georgia, serif;
+    color: #4c4c4c;
+}
+
+.logo img {
+    height: 100px;
+}
+
+.register-form .login-link a {
+    color: #1591ea;
+    font-weight: 600;
+}
+
+.left-side {
+    flex: 1;
+    height: auto;
+    max-width: 400px;
+    background: #ffffff;
+    background-image: url(../images/ai_2-removebg.png);
+    background-repeat: no-repeat;
+    background-size: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.left-side img {
+    height: 300px;
+}
+
+.bottoms {
+    margin-top:140px; /* Pushes the items to the bottom */
+    display: flex;
+    flex-direction: column; /* Stack items vertically */
+}
+
+@media screen and (max-width: 600px) {
+    .left-side {
+        display: none;
+    }
+}
