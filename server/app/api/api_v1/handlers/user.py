@@ -4,6 +4,7 @@ import pymongo
 from app.models.user_model import User
 from fastapi.responses import JSONResponse
 from app.services.user_service import UserService
+from app.services.langchain_service import LangchainAIService
 from typing import List
 from uuid import UUID
 from fastapi import APIRouter, Depends
@@ -12,7 +13,10 @@ from logs.loggers.logger import logger_config
 logger = logger_config(__name__)
 from app.models.user_model import User
 from app.api.deps.user_deps import get_current_user
-from app.schemas.user_schema import PasswordResetRequest, PasswordResetConfirm
+from app.schemas.user_schema import (PasswordResetRequest, 
+                                     PasswordResetConfirm, 
+                                     UserChat, 
+                                     UserChatResponse)
 import jwt
 from bson import ObjectId
 from fastapi import APIRouter, Query
@@ -49,6 +53,19 @@ async def reset_password_confirm(request: PasswordResetConfirm):
         await UserService.reset_password(request.token, request.new_password)
         return JSONResponse(
             content={"message": "Password reset successfully!"})
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"{e}"
+        )
+
+@user_router.post('/chatbot', summary="Chatbot", response_model=UserChatResponse)
+async def chat(request: UserChat,
+               authorization: str = Header(...),
+               refresh_token: str = Header(...)):
+    try:
+        user = await UserService.decode_token(authorization, refresh_token)
+        return await LangchainAIService.full_chain(request.question, user.username)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

@@ -10,7 +10,7 @@ from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from pydantic import BaseModel, EmailStr
 from fastapi import FastAPI, HTTPException, Depends
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID
 from app.schemas.user_schema import UserAuth
 from app.models.user_model import User
@@ -21,6 +21,7 @@ from app.schemas.auth_schema import TokenSchema, TokenPayload
 from logs.loggers.logger import logger_config
 import json
 import random
+from urllib.parse import urlencode
 logger = logger_config(__name__)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -75,7 +76,7 @@ class UserService:
         return user
 
     @staticmethod
-    async def send_email_request(email: str):
+    async def send_email_request(email: str, problem: str, timestamps: list):
         user = await UserService.get_user_by_email(email)
         if not user:
             raise pymongo.errors.OperationFailure(
@@ -86,11 +87,19 @@ class UserService:
         access_token = UserService.create_access_token(
             data={"sub": email}, expires_delta=access_token_expires
         )
-        logger.debug(f'Access token from email resent:\n{access_token}')
-        reset_link = f"{settings.FRONTEND_API_URL}/reset/password?token={access_token}"
+        logger.debug(f'Access token from email:\n{access_token}')
+        # Construct the URL with the problem as a query parameter
+        query_params = {
+            'token': access_token,
+            'problem': problem
+        }
+        # Encode the query parameters
+        encoded_params = urlencode(query_params)
+        # Construct the final link
+        link = f"{settings.FRONTEND_API_URL}/dashboard?{encoded_params}"
         # Send the reset link to the user's email
-        logger.debug(f"Reset link: {reset_link}")
-        status = UserService.send_email(email, reset_link)
+        logger.debug(f"Dashboard Link: {link}")
+        status = UserService.send_email(email, problem, link, timestamps)
         if status:
             return logger.debug("Password reset email sent!")
         else:
@@ -122,14 +131,27 @@ class UserService:
         return {"msg": "Password reset successful"}
 
     @staticmethod
-    def send_email(email: str, reset_link):
+    async def send_email(email: str, problem: str, link: str, timestamp: list):
         try:
             # Email details
             sender_email = settings.MY_EMAIL
             receiver_email = email
-            subject = "PASSWORD RESET LINK REQUEST: Applicare OS AI"
-            body = f"Password Reset Link:\n{reset_link}"
-
+            subject = "Upcoming Issue Detected in Your OS System"
+            body = (
+                    "Dear Client,\n\n"
+                    "We have identified a potential issue that may occur in your OS system within the next day.\n\n"
+                    "Details of the anticipated problem:\n"
+                    f"{problem}\n\n"
+                    "Problem occurred at these timestamps:\n"
+                    f"{timestamp}\n\n"
+                    "Please monitor your dashboard for updates and take any necessary actions to address the issue.\n\n"
+                    "Dashboard Link:\n"
+                    f"{link}\n\n"
+                    "Thank you for your attention to this matter.\n\n"
+                    "Best regards,\n"
+                    "Applicare OS AI Team"
+                )
+            
             # Create the email message
             message = MIMEMultipart()
             message["From"] = sender_email

@@ -36,3 +36,8 @@ class PasswordResetConfirm(BaseModel):
     token: str
     new_password: str
     
+class UserChat(BaseModel):
+    question: str
+
+class UserChatResponse(BaseModel):
+    response: str

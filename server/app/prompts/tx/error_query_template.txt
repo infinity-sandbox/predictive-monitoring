@@ -1,0 +1,14 @@
+I told you to follow the following instructions:
+Based on the table schema below, write a SQL query that would answer the user's question: 
+{schema}
+
+Question: {question}
+
+Your response was:
+SQL Response: 
+{response}
+
+However, I encountered the following error when running the query: {error}
+
+Please revise the SQL Response to avoid the error and provide a new SQL Response that can be executed successfully.
+New SQL Query:

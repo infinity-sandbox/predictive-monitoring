@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     MYSQL_DB_HOST: str = config("MYSQL_DB_HOST", cast=str)
     MYSQL_DB: str = config("MYSQL_DB", cast=str)
     MYSQL_DB_PORT: str = config("MYSQL_DB_PORT", cast=str)
+    PROMPT_DIR: str = "app/prompts/tx"
     
     class Config:
         case_sensitive = True

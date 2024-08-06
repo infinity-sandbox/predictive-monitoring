@@ -1,0 +1,8 @@
+Based on the table schema below, question, SQL query, and SQL response, write a natural language response:
+{schema}
+
+Question: {question}
+SQL Query: {query}
+SQL Response: {response}
+The username of the person who asked the question is: {username}
+Make your answer as clear and concise as possible and as human response.
