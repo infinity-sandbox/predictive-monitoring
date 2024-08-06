@@ -1,29 +1,20 @@
 #!/bin/bash
 
-echo "Stopping backend container..."
-docker-compose -f docker-compose.yml down --timeout 30 osai_backend
+chmod +x setupEnvironment.sh
+source setupEnvironment.sh
+# ------------------------------------------------------------
+cd server
+chmod +x install_be.sh
+source install_be.sh
 
-echo "Building backend container..."
-docker-compose -f docker-compose.yml build osai_backend
+cd ..
 
-echo "Installing backend container..."
-docker-compose -f docker-compose.yml up --remove-orphans --force-recreate -d osai_backend
+cd dashboard
+chmod +x install_fe.sh
+source install_fe.sh
 
-echo "Backend container installed successfully!"
-
-#
-
-echo "Stopping frontend container..."
-docker-compose -f docker-compose.yml down --timeout 30 osai_frontend
-
-echo "Building frontend container..."
-docker-compose -f docker-compose.yml build osai_frontend
-
-echo "Installing frontend container..."
-docker-compose -f docker-compose.yml up --remove-orphans --force-recreate -d osai_frontend
-
-echo "Frontend container installed successfully!"
-
+cd ..
+# ------------------------------------------------------------
 echo "Listing all running containers..."
 docker ps
 

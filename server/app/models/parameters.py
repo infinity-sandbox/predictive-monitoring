@@ -1,10 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
 
 
 class PredictionRequest(BaseModel):
-    days: int
-    column: str    
+    column: str
+    days: Optional[int] = Field(default=1, description="Number of days for prediction, default is 1 if not provided")
+    
 
 class ForecastResponse(BaseModel):
     predictions: List[Dict]

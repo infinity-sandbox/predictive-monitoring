@@ -35,10 +35,9 @@ RUN adduser \
 RUN chown -R appuser:appuser /backend
 
 # Copy the dependencies file to the working directory
-COPY ./server/requirements.txt /backend/
-COPY ./server/setup.py /backend/
-COPY ./server/readme.rst /backend/
-# COPY ./server/ /backend/
+COPY ./requirements.txt /backend/
+COPY ./setup.py /backend/
+COPY ./readme.rst /backend/
 
 # Upgrade pip
 RUN pip install --upgrade pip
@@ -47,7 +46,7 @@ RUN pip install --upgrade pip
 RUN pip install -e .
 
 # Uncomment this one if you want to use caching
-COPY ./server/ /backend/
+COPY ./ /backend/
 
 # Change ownership of the /backend directory and its subdirectories to appuser
 RUN chown -R appuser:appuser /backend/logs
