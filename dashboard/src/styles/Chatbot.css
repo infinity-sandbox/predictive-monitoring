@@ -1,0 +1,151 @@
+/* Ensure the body and html have full height and overflow settings */
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden; /* Prevent scrollbars on the body */
+}
+
+.page-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-container {
+  background-color: white;
+  padding: 100px;
+  position: absolute;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* Allow it to grow and shrink as needed */
+  overflow: hidden; /* Prevent overflow */
+  
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 10px; /* Space for scrollbar */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Aligns messages to the left */
+}
+
+.message {
+  padding: 10px 15px;
+  border-radius: 20px;
+  margin: 10px 0;
+  max-width: fit-content; /* Adjust width based on content */
+  word-wrap: break-word;
+  font-size: 16px;
+  position: relative;
+}
+
+.user {
+  background-color: #f1f1f1;
+  align-self: flex-start; /* Align user messages to the right */
+  margin-right: auto; /* Ensure bot messages are pushed to the left */
+  border-radius: 20px 20px 0 20px; /* Rounded corners for user messages */
+}
+
+.bot {
+  background-color: #007bff;
+  color: white;
+  align-self: flex-start; /* Align bot messages to the left */
+  margin-right: auto; /* Ensure bot messages are pushed to the left */
+  border-radius: 30px 30px 30px 0; /* Rounded corners for bot messages */
+  max-height: 100px; /* Ensure the message does not overflow */
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Center the dots horizontally */
+  height: 10px;
+  position: relative; /* Allows positioning adjustments */
+  overflow: hidden; /* Ensure overflow does not expand the container */
+}
+
+.loading .dot {
+  height: 10px;
+  width: 10px;
+  margin: 0 2px;
+  background-color: white;
+  border-radius: 50%;
+  display: inline-block;
+  animation: dot-blink 1.4s infinite both;
+}
+
+@keyframes dot-blink {
+  0%, 80%, 100% {
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+@keyframes typewriter {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.chat-input-container {
+  display: flex;
+  align-items: center;
+  background-color: rgb(255, 255, 255);
+  position: fixed;
+  bottom: 0;
+  right: 0; /* Ensure it starts at the left edge */
+  width: calc(100% - 250px); /* Adjust based on sidebar width */
+  max-width: calc(100% - 250px); /* Adjust based on sidebar width */
+  z-index: 10;
+  /* box-shadow: 0 -1px 5px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box; Include padding and border in the element's total width and height */
+}
+
+.chat-input {
+  flex: 1;
+  padding: 10px 20px;
+  border-radius: 20px;
+  border: none;
+  background-color: white;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  margin-right: 10px;
+  font-size: 16px;
+  outline: none;
+  box-sizing: border-box; /* Include padding in the width */
+}
+
+.send-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 16px;
+  box-sizing: border-box; /* Include padding in the width */
+}
+
+
+
+/* Styling for initial message */
+.initial-message {
+  font-size: 50px; /* Larger text size for prominence */
+  font-weight: bold;
+  text-align: center;
+  font-family: 'Fira Code', monospace; /* Use Fira Code font */
+  padding: 50px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  max-width: 80%; /* Adjust width as needed */
+}
+
+/* Import Fira Code font in your CSS file */
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap');

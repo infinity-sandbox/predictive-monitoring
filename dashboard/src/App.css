@@ -9,6 +9,16 @@ body,
   text-align: center;
 }
 
+.app-container {
+  display: flex;
+}
+
+.main-content {
+  margin-left: 250px; /* Adjust this value to the width of your sidebar */
+  padding: 20px;
+  width: calc(100% - 250px); /* Adjust this value to the width of your sidebar */
+}
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;

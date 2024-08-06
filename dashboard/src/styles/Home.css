@@ -1,0 +1,49 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden; /* Prevent scrolling */
+  }
+  
+  .homepage-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Full viewport height */
+    background-color: #ffffff; /* Light grey background */
+    overflow: hidden; /* Prevent overflow */
+  }
+  
+  .circle {
+    width: 100px;
+    height: 100px;
+    background-color: #007bff; /* Blue color */
+    border-radius: 50%; /* Makes it circular */
+    margin-bottom: 20px; /* Space between circle and message */
+    animation: heartbeat 1.5s infinite; /* Apply heartbeat animation */
+  }
+  
+  .message {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333; /* Dark text color */
+  }
+  
+  @keyframes heartbeat {
+    0% {
+      transform: scale(1); /* Original size */
+    }
+    25% {
+      transform: scale(1.2); /* Larger size */
+    }
+    50% {
+      transform: scale(1); /* Back to original size */
+    }
+    75% {
+      transform: scale(1.2); /* Larger size */
+    }
+    100% {
+      transform: scale(1); /* Original size */
+    }
+  }
+  

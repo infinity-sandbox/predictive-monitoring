@@ -11,3 +11,71 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+
+/* index.css */
+
+/* Reset margins and paddings for body and html */
+body, html {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+/* Layout container styles */
+.layout-container {
+  display: flex;
+  height: 100vh; /* Full viewport height */
+}
+
+/* Sidebar styles */
+.sidebar {
+  width: 250px; /* Adjust the width of the sidebar */
+  background: linear-gradient(to bottom right, #1e3a8a, #1d4ed8); /* Blue gradient */
+  color: white;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  padding-top: 20px; /* Padding for the icon */
+  box-sizing: border-box; /* Include padding in width/height calculations */
+  overflow: hidden; /* Hide overflow */
+}
+
+.sidebar-icon {
+  width: 150px; /* Adjust based on your logo size */
+  height: auto;
+  margin: 20px auto;
+}
+
+.nav-links {
+  display: flex;
+  flex-direction: column;
+  width: 100%; /* Full width of the sidebar */
+}
+
+.nav-link {
+  text-decoration: none;
+  color: white;
+  padding: 15px;
+  text-align: center;
+  font-size: 16px;
+  display: block;
+  width: 100%;
+  box-sizing: border-box; /* Ensure padding and border are included in width */
+}
+
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Main content styles */
+.main-content {
+  margin-left: 250px; /* Offset by the width of the sidebar */
+  padding: 20px; /* Add padding for content spacing */
+  height: 100vh; /* Full height of the viewport */
+  box-sizing: border-box; /* Include padding in width/height calculations */
+  overflow: auto; /* Handle overflow within content */
+}

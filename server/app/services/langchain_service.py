@@ -139,7 +139,10 @@ class LangchainAIService(OpenAIService):
             logger.info(f"response: {response}\ntype: {type(response)}")
             logger.debug(f"SQL Response: {response}\nNew Query: {query}")
             response = LangchainAIService.truncate_response(response)
-            return response_sql_chain.invoke({"question": question, "query": query, "response": response, "username": username})
+            result = response_sql_chain.invoke({"question": question, "query": query, "response": response, "username": username})
+            result = str(result)
+            logger.debug(f"Natural Language Response: {result}")
+            return result
         # Generate the natural language response using the response_prompt
         except Exception as e:
             logger.error(f"Error getting response: {e}")

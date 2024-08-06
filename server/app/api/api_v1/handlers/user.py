@@ -65,7 +65,8 @@ async def chat(request: UserChat,
                refresh_token: str = Header(...)):
     try:
         user = await UserService.decode_token(authorization, refresh_token)
-        return await LangchainAIService.full_chain(request.question, user.username)
+        response = await LangchainAIService.full_chain(request.question, user.username)
+        return UserChatResponse(response=response)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

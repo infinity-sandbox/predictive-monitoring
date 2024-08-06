@@ -1,0 +1,128 @@
+/* Full page container to ensure marquee text spans the full width */
+body, html {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+.sidebar {
+  width: 300px; /* Increased width for better space */
+  background: linear-gradient(to bottom right, #1e3a8a, #1d4ed8); /* Blue gradient */
+  color: white;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow: hidden; /* Hide overflow */
+  padding-top: 50px; /* Space for the marquee */
+  box-sizing: border-box; /* Include padding in width/height calculations */
+}
+
+.marquee-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw; /* Full width of the viewport */
+  background: yellow;
+  color: red;
+  white-space: nowrap;
+  height: 50px; /* Increased height for better visibility */
+  overflow: hidden;
+  z-index: 1000; /* Ensure it stays on top */
+}
+
+.marquee-text {
+  display: inline-block;
+  padding-left: 100%; /* Start text offscreen */
+  animation: marquee 20s linear infinite; /* Slower animation */
+  font-weight: bold;
+}
+
+.sidebar-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 50px; /* Space for the marquee */
+}
+
+.sidebar-icon {
+  width: 180px; /* Increased logo size */
+  height: auto;
+  margin: 20px auto;
+}
+
+.nav-links {
+  display: flex;
+  flex-direction: column;
+  width: 100%; /* Full width of the sidebar */
+}
+
+.nav-link {
+  text-decoration: none;
+  color: white;
+  padding: 10px; /* Reduced padding for smaller size */
+  text-align: center;
+  font-size: 16px; /* Smaller font size */
+  display: block;
+  width: 100%;
+  box-sizing: border-box; /* Ensure padding and border are included in width */
+}
+
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Keyframes for the marquee effect */
+@keyframes marquee {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+/* Ensure main content area is properly offset from the sidebar */
+.app-container {
+  margin-left: 300px; /* Same width as sidebar */
+  padding: 20px; /* Add padding for content spacing */
+}
+
+/* Media query for smaller screens */
+@media screen and (max-width: 768px) {
+  .sidebar {
+    width: 250px; /* Reduce sidebar width on smaller screens */
+  }
+
+  .sidebar-icon {
+    width: 160px; /* Adjust logo size for smaller screens */
+  }
+
+  .nav-link {
+    font-size: 14px; /* Smaller font size for links on smaller screens */
+  }
+
+  .app-container {
+    margin-left: 250px; /* Adjust margin for smaller sidebar */
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .sidebar {
+    width: 200px; /* Further reduce sidebar width on very small screens */
+  }
+
+  .sidebar-icon {
+    width: 140px; /* Adjust logo size for very small screens */
+  }
+
+  .nav-link {
+    font-size: 12px; /* Smaller font size for links on very small screens */
+  }
+
+  .app-container {
+    margin-left: 200px; /* Adjust margin for very small sidebar */
+  }
+}
