@@ -4,10 +4,13 @@ from logs.loggers.logger import logger_config
 from pydantic_settings import BaseSettings
 from pydantic import AnyHttpUrl
 logger = logger_config(__name__)
-
+from utils.version import get_version_and_build
+version, build = get_version_and_build()
 
 class Settings(BaseSettings):
     logger.info("Loading configurations...")
+    VERSION: str = version
+    BUILD: str = build
     API_V1_STR: str = "/api/v1"
     JWT_SECRET_KEY: str = config("JWT_SECRET_KEY", cast=str)
     JWT_REFRESH_SECRET_KEY: str = config("JWT_REFRESH_SECRET_KEY", cast=str)

@@ -20,7 +20,7 @@ app = FastAPI(
     openapi_url=f'{settings.API_V1_STR}/openapi.json',
 )
 
-run_banner()
+run_banner(settings.VERSION, settings.BUILD)
 
 app.add_middleware(
     CORSMiddleware,

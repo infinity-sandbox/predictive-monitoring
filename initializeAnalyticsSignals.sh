@@ -1,7 +1,5 @@
 #!/bin/bash
 
-chmod +x setupEnvironment.sh
-source setupEnvironment.sh
 # ------------------------------------------------------------
 cd server
 chmod +x install_be.sh
