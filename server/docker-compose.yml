@@ -1,11 +1,11 @@
 version: "3"
 services:
-  osai_backend:
-    container_name: osai_backend
+  backend_applicare:
+    container_name: backend_applicare
     build:
         context: ./
-        dockerfile: dockerfile.osai_backend
-    image: osai_backend:latest
+        dockerfile: dockerfile.backend
+    image: backend_applicare:latest
     restart: unless-stopped
     expose:
       - 8000

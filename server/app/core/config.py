@@ -23,7 +23,7 @@ class Settings(BaseSettings):
                                               "http://0.0.0.0",
                                               "http://0.0.0.0:8000",
                                             ]
-    PROJECT_NAME: str = "OSAI"
+    PROJECT_NAME: str = "applicare-ai"
     MONGO_CONNECTION_STRING: str = config("MONGO_CONNECTION_STRING", cast=str)
     OPENAI_API_KEY: str = config("OPENAI_API_KEY", cast=str)
     FRONTEND_API_URL: str = config("FRONTEND_API_URL", cast=str)

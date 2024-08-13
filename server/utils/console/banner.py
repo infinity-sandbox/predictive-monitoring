@@ -17,8 +17,8 @@ _MAIN_BANNER = r"""{}
 ██║  ██║██║                                                        
 ╚═╝  ╚═╝╚═╝                                                                                     
                                                 
-    {}by arcturus  ~  applicare predictive monitoring
-                  v[_V_], b[_B_]
+version: [_V_]
+build: [_B_]
                   
 """.format(IO.Fore.GREEN, IO.Style.RESET_ALL + IO.Style.BRIGHT)                                    
 

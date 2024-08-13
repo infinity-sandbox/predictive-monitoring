@@ -1,11 +1,11 @@
 version: "3"
 services:
-  osai_frontend:
-    container_name: osai_frontend
+  frontend_applicare:
+    container_name: frontend_applicare
     build:
         context: ./
-        dockerfile: dockerfile.osai_frontend
-    image: osai_frontend:latest
+        dockerfile: dockerfile.frontend
+    image: frontend_applicare:latest
     restart: unless-stopped
     expose:
       - 3000
