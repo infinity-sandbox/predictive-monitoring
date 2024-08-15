@@ -25,9 +25,11 @@ class LangchainAIService(OpenAIService):
     def get_schema():
         db = LangchainAIService.connection()
         if hasattr(db, 'get_table_info'):
-            schema = db.get_table_info(table_names=["service_snaps", "oshistory_detail"])
+            schema = db.get_table_info()
         else:
             raise TypeError("The provided 'db' object does not have the 'get_table_info' method.")
+        schema = LangchainAIService.truncate_response(schema, 10000)
+        logger.warning(f'SCHEMA: {schema}')
         return schema
 
     @staticmethod
@@ -111,7 +113,7 @@ class LangchainAIService(OpenAIService):
                 logger.warning(f"Retrying query... Attempt {attempt + 1} of {max_retries}")
                 
     @staticmethod
-    def truncate_response(response: str, max_tokens: int = 30) -> str:
+    def truncate_response(response: str, max_tokens: int = 100) -> str:
         # Initialize the tokenizer
         tokenizer = tiktoken.get_encoding("cl100k_base")
 
