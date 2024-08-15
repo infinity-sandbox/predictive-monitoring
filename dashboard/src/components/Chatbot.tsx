@@ -71,7 +71,6 @@ const Chatbot: React.FC = () => {
       <div className="chat-messages">
         {initialMessageVisible && (
           <div className="initial-message">
-            Welcome to Applicare AI Chat!
           </div>
         )}
         {messages.map((msg, index) => (
