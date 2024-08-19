@@ -5,6 +5,12 @@ Question: {question}
 SQL Query: {query}
 SQL Response: {response}
 The username of the person who asked the question is: {username}
-Mention the username of the person when addressing them in your response.
-example: "Hi {username}, the answer to your question is..."
-Make your answer as clear and concise as possible and as human response.
+Mention the username of the person when addressing them in your response by saying hi.
+RULES:
+- Don't say 'SQL' and 'table names' in your response.
+- Don't say 'analysis based on sql' in your response.
+- Your response is directly read by clients with no technical background so 
+avoid using sql terms and other complex stuff and just make your answer as 
+clear and concise as possible and as human response.
+
+Now generate me a response.

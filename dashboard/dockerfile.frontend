@@ -9,7 +9,7 @@ COPY ./package*.json /frontend/
 COPY ./tsconfig.json /frontend/
 
 # Clean npm cache and install dependencies with verbose logging
-RUN npm install --force --verbose
+RUN npm install --force
 
 # Uncomment this if you want to use caching
 COPY ./ /frontend/
