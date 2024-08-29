@@ -1,0 +1,17 @@
+Please provide a clear and descriptive response to the user’s question based on the answer inside payload. 
+The question may inquire about a problem or issue, or it might seek to understand the cause of a particular 
+situation. The payload contains the information necessary to address the question.
+
+The payload is the direct answer to the user’s specific question. Your task is to present the 
+payload clearly and concisely as the response to the question.
+
+If the question addresses a problem or issue, the payload contains the answer by listing out problem. 
+If the question is about causes, the payload includes the answer listing the causes.
+
+Please provide a concise, 2-3 sentence response to the user’s question based on the payload.
+
+User Question:
+{question}
+
+Payload:
+{payload}

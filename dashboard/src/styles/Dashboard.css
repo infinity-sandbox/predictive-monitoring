@@ -11,11 +11,21 @@
   margin-bottom: 20px;
 }
 
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+@keyframes heartbeat {
+  0% { transform: scale(1); }
+  20% { transform: scale(1.2); }
+  40% { transform: scale(1); }
+  60% { transform: scale(1.2); }
+  80% { transform: scale(1); }
+  100% { transform: scale(1); }
+}
+
+.heartbeat {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #007bff; /* Change to your desired color */
+  animation: heartbeat 1.5s infinite;
 }
 
 /* Dashboard.css */
@@ -24,6 +34,7 @@
   justify-content: center;
   align-items: center;
   height: 80vh;
+  width: 100%;
   position: relative; /* Allows positioning adjustments */
 }
 

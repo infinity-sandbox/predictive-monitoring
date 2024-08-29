@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Button, Select, Spin, Row, Col, Divider } from 'antd';
+import { Button, Select, Row, Col, Divider } from 'antd';
 import { Line, Bar } from 'react-chartjs-2';
 import 'chart.js/auto'; // Import the necessary chart.js components
 import '../styles/Dashboard.css';
@@ -70,50 +70,56 @@ const Dashboard: React.FC = () => {
   };
 
   const renderLineChart = (dataList: DataWithDate[], title?: string) => {
-    // Combine dates and remove duplicates
+    // Log title to verify
+    console.log("Title Passed to Chart:", title);
+  
     const combinedDates = Array.from(new Set(dataList.flatMap(data => data.date))).sort();
-    
-    // Slice data for training and prediction
-    const slicedData = dataList.map((data, index) => {
+  
+    const datasets = dataList.map((data, index) => {
       const datasetType = index === 0 ? 'predictions' : index === 1 ? 'train' : 'test';
-      let slicedDates = combinedDates;
-      let dataPoints = data[Object.keys(data)[1]];
-
-      if (datasetType === 'train') {
-        // Last 20 data points for training data
-        slicedDates = combinedDates.slice(-20);
-        dataPoints = dataPoints.slice(-20);
-      } else if (datasetType === 'predictions') {
-        // First 20 data points for prediction data
-        slicedDates = combinedDates.slice(0, 20);
-        dataPoints = dataPoints.slice(0, 20);
+      const key = Object.keys(data).find(key => key !== 'date');
+      
+      if (!key) {
+        console.error('No valid key found for dataset:', data);
+        return {
+          label: `Data (${datasetType.charAt(0).toUpperCase() + datasetType.slice(1)})`,
+          data: new Array(combinedDates.length).fill(null),
+          borderColor: colors[datasetType] || '#318CE7',
+          backgroundColor: 'rgba(0,0,0,0)',
+          borderWidth: 2,
+          spanGaps: true
+        };
       }
-
+  
       return {
-        label: `${Object.keys(data)[1]} (${datasetType.charAt(0).toUpperCase() + datasetType.slice(1)})`,
-        data: slicedDates.map(date => {
+        label: `${key} (${datasetType.charAt(0).toUpperCase() + datasetType.slice(1)})`,
+        data: combinedDates.map(date => {
           const dateIndex = data.date.indexOf(date);
-          return dateIndex !== -1 ? dataPoints[dateIndex] : null;
+          return dateIndex !== -1 ? data[key][dateIndex] : null;
         }),
         borderColor: colors[datasetType] || '#318CE7',
         backgroundColor: 'rgba(0,0,0,0)',
         borderWidth: 2,
-        spanGaps: true // Enable this to handle gaps in data
+        spanGaps: true
       };
     });
-
+  
+    // Create a dynamic title from column names if title prop is not provided
+    const columnNames = dataList.flatMap(data => Object.keys(data).filter(key => key !== 'date'));
+    const formattedTitle = title || `Forecast for ${columnNames.join(', ')}`;
+  
     return (
       <Line
         data={{
           labels: combinedDates,
-          datasets: slicedData,
+          datasets: datasets,
         }}
         options={{
           responsive: true,
           plugins: {
             title: {
               display: true,
-              text: title || `Forecast for ${Object.keys(dataList[0])[1]}`, // Use provided title or fallback to default
+              text: formattedTitle, // Ensure this is used correctly
               font: {
                 size: 16,
                 weight: 'bold',
@@ -230,7 +236,7 @@ const Dashboard: React.FC = () => {
 
       {loading ? (
         <div className="loading">
-          <Spin size="large" />
+          <div className="heartbeat"></div>
         </div>
       ) : (
         forecastData && (
@@ -255,7 +261,7 @@ const Dashboard: React.FC = () => {
                       forecastData.train[index],
                       forecastData.test[index]
                     ],
-                    `Data Point ${index + 1}`
+                    `Cause ${index + 1}`
                   )}
                 </Col>
               ))}

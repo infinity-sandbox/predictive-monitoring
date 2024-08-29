@@ -94,16 +94,16 @@ class OpenAIService:
         return completion
     
     @staticmethod
-    async def chatbot(username: str, query: str) -> str:
+    async def respond(query: str, payload: str) -> str:
         try:
-            PROMPT_PATH=os.path.join(settings.PROMPT_DIR, "chatbot_prompt.txt")
+            PROMPT_PATH=os.path.join(settings.PROMPT_DIR, "admin_response.txt")
             with open(PROMPT_PATH, "r") as file:
                 PROMPT = file.read()
         except FileNotFoundError as e:
             logger.error(f"File not found: {e}")
             raise FileNotFoundError(f"File not found: {e}")
         API_RESPONSE = await OpenAIService.get_completion(
-            [{"role": "system", "content": PROMPT.format(username=username, query=query)}],
+            [{"role": "system", "content": PROMPT.format(question=query, payload=payload)}],
             model=settings.MODEL
         )
         system_msg = str(API_RESPONSE.choices[0].message.content)

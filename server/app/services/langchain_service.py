@@ -209,10 +209,7 @@ class LangchainAIService(OpenAIService):
                             datetime.utcfromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S') 
                             for ts in values]
                     formatted_issues = {key for key, value in non_empty_issues.items()}
-                    return f"Here are the issues detected: " \
-                        f"The report includes details about various problems and their timestamps," \
-                        f"showing when each issue occurred." \
-                        f"\n{formatted_issues}"
+                    return await OpenAIService.respond(question, formatted_issues)
                 else:
                     return f"No issues have been detected so far, {username}."
             except Exception as e:
@@ -226,10 +223,9 @@ class LangchainAIService(OpenAIService):
                     from app.services.multivariate_timeseries import MultivariateTimeSeries
                     feature_importances_dict = await MultivariateTimeSeries._feature_selection(
                         non_empty_keys[0])
-                    return f"Here are the causes detected:" \
-                        f"\n{feature_importances_dict['features'][:3]}"
+                    return await OpenAIService.respond(question, feature_importances_dict['features'][:3])
                 else:
-                    return f"No issues and no causes have been detected so far, {username}."
+                    return f"No causes have been detected so far, {username}."
             except Exception as e:
                 logger.error(f"Error getting response: {e}")
                 return f"Error getting response: {e}"
