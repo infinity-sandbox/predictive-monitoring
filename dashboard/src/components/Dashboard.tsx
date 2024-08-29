@@ -4,6 +4,10 @@ import { Button, Select, Spin, Row, Col, Divider } from 'antd';
 import { Line, Bar } from 'react-chartjs-2';
 import 'chart.js/auto'; // Import the necessary chart.js components
 import '../styles/Dashboard.css';
+import { Chart as ChartJS, CategoryScale, LinearScale, LineElement, PointElement, Tooltip, Legend } from 'chart.js';
+import 'chartjs-adapter-date-fns';
+
+ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Tooltip, Legend);
 
 const { Option } = Select;
 const baseUrl = process.env.REACT_APP_BACKEND_API_URL;
@@ -33,79 +37,83 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    axios.get(baseUrl + '/api/v1/varmax/dropdown_data')
-      .then(response => setDropdownItems(response.data))
-      .catch(error => console.error('Error fetching dropdown data:', error));
+    const fetchDropdownData = async () => {
+      try {
+        const response = await axios.get(baseUrl + '/api/v1/varmax/dropdown_data');
+        setDropdownItems(response.data);
+      } catch (error) {
+        console.error('Error fetching dropdown data:', error);
+      }
+    };
+
+    fetchDropdownData();
   }, []);
 
-  const handleForecast = () => {
+  const handleForecast = async () => {
     if (days !== undefined && column) {
       setLoading(true);
-      axios.post(baseUrl + '/api/v1/varmax/forecaster', { days, column })
-        .then(response => {
-          setForecastData(response.data);
-          setLoading(false);
-        })
-        .catch(error => {
-          console.error('Error fetching forecast data:', error);
-          setLoading(false);
-        });
+      try {
+        const response = await axios.post(baseUrl + '/api/v1/varmax/forecaster', { days, column });
+        setForecastData(response.data);
+      } catch (error) {
+        console.error('Error fetching forecast data:', error);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-// NOTE: uncomment this block if you want d/t shades of color
-// const colors: { [key: string]: string } = {
-//     predictions: '#ff5733', // Orange
-//     train: '#33ff57',      // Green
-//     test: '#3357ff'        // Blue
-//   };
-
-const colors: { [key: string]: string } = {
-    predictions: '#318CE7', // Blue
-    train: '#318CE7',      // Green
-    test: '#318CE7'        // Orange
+  const colors: { [key: string]: string } = {
+    predictions: '#ff5733', // Orange
+    train: '#3357ff',      // Blue
+    test: '#3357ff'        // Blue
   };
-  
-  const renderLineChart = (dataList: DataWithDate[], type: string) => {
-    // Extract dates from the first entry
-    const labels = dataList[0]?.date || [];
-  
-    // Create datasets for each column in the dataList
-    const datasets = dataList.flatMap((data, index) => {
-      // Determine the dataset type based on the index
-      const datasetType = index === 0 ? 'predictions' : index === 1 ? 'train' : 'test';
-      return Object.keys(data)
-        .filter(key => key !== 'date') // Exclude the 'date' key
-        .map((colName) => ({
-          label: `${colName} (${datasetType.charAt(0).toUpperCase() + datasetType.slice(1)})`,
-          data: data[colName] as number[], // Cast to number array
-          borderColor: colors[datasetType] || '#318CE7', // Use color based on dataset type, default to blue
-          backgroundColor: 'rgba(0,0,0,0)',
-          borderWidth: 2,
-          columnName: colName // Assign column name to the dataset for later use
-        }));
-    });
-  
-    // Collect unique column names manually
-    const columnNames: string[] = [];
-    datasets.forEach(dataset => {
-      if (!columnNames.includes(dataset.columnName)) {
-        columnNames.push(dataset.columnName);
-      }
-    });
+
+  const renderLineChart = (dataList: DataWithDate[], title?: string) => {
+    // Combine dates and remove duplicates
+    const combinedDates = Array.from(new Set(dataList.flatMap(data => data.date))).sort();
     
+    // Slice data for training and prediction
+    const slicedData = dataList.map((data, index) => {
+      const datasetType = index === 0 ? 'predictions' : index === 1 ? 'train' : 'test';
+      let slicedDates = combinedDates;
+      let dataPoints = data[Object.keys(data)[1]];
+
+      if (datasetType === 'train') {
+        // Last 20 data points for training data
+        slicedDates = combinedDates.slice(-20);
+        dataPoints = dataPoints.slice(-20);
+      } else if (datasetType === 'predictions') {
+        // First 20 data points for prediction data
+        slicedDates = combinedDates.slice(0, 20);
+        dataPoints = dataPoints.slice(0, 20);
+      }
+
+      return {
+        label: `${Object.keys(data)[1]} (${datasetType.charAt(0).toUpperCase() + datasetType.slice(1)})`,
+        data: slicedDates.map(date => {
+          const dateIndex = data.date.indexOf(date);
+          return dateIndex !== -1 ? dataPoints[dateIndex] : null;
+        }),
+        borderColor: colors[datasetType] || '#318CE7',
+        backgroundColor: 'rgba(0,0,0,0)',
+        borderWidth: 2,
+        spanGaps: true // Enable this to handle gaps in data
+      };
+    });
+
     return (
       <Line
         data={{
-          labels,
-          datasets,
+          labels: combinedDates,
+          datasets: slicedData,
         }}
         options={{
           responsive: true,
           plugins: {
             title: {
               display: true,
-              text: `Forecast for ${columnNames.join(', ')}`, // Use column names for the title
+              text: title || `Forecast for ${Object.keys(dataList[0])[1]}`, // Use provided title or fallback to default
               font: {
                 size: 16,
                 weight: 'bold',
@@ -136,7 +144,7 @@ const colors: { [key: string]: string } = {
       />
     );
   };
-  
+
   const renderBarChart = (causes: { features: string[]; importance: number[] }, columnName: string) => {
     return (
       <Bar
@@ -260,4 +268,3 @@ const colors: { [key: string]: string } = {
 };
 
 export default Dashboard;
-

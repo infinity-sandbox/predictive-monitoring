@@ -77,6 +77,7 @@ class UserService:
 
     @staticmethod
     async def _send_email_request(email: str, problem: str, timestamps: list):
+        logger.debug(f"Sending email to {email} with problem: {problem}")
         user = await UserService.get_user_by_email(email)
         if not user:
             raise pymongo.errors.OperationFailure(
@@ -99,7 +100,7 @@ class UserService:
         link = f"{settings.FRONTEND_API_URL}/dashboard?{encoded_params}"
         # Send the reset link to the user's email
         logger.debug(f"Dashboard Link: {link}")
-        status = UserService._send_email(email, problem, link, timestamps)
+        status = await UserService._send_email(email, problem, link, timestamps)
         if status:
             return logger.debug("Password reset email sent!")
         else:
@@ -134,23 +135,35 @@ class UserService:
     async def _send_email(email: str, problem: str, link: str, timestamp: list):
         try:
             # Email details
+            logger.info(f'Prepared to send email ...')
             sender_email = settings.MY_EMAIL
             receiver_email = email
-            subject = "Upcoming Issue Detected in Your OS System"
+            subject = "Current Issue Detected in Your OS System"
+            # body = (
+            #         "Dear Client,\n\n"
+            #         "We have identified a potential issue that may occur in your OS system within the next day.\n\n"
+            #         "Details of the anticipated problem:\n"
+            #         f"{problem}\n\n"
+            #         "Problem occurred at these timestamps:\n"
+            #         f"{timestamp}\n\n"
+            #         "Please monitor your dashboard for updates and take any necessary actions to address the issue.\n\n"
+            #         "Dashboard Link:\n"
+            #         f"{link}\n\n"
+            #         "Thank you for your attention to this matter.\n\n"
+            #         "Best regards,\n"
+            #         "Applicare OS AI Team"
+            #     )
+            
             body = (
-                    "Dear Client,\n\n"
-                    "We have identified a potential issue that may occur in your OS system within the next day.\n\n"
-                    "Details of the anticipated problem:\n"
-                    f"{problem}\n\n"
-                    "Problem occurred at these timestamps:\n"
-                    f"{timestamp}\n\n"
-                    "Please monitor your dashboard for updates and take any necessary actions to address the issue.\n\n"
-                    "Dashboard Link:\n"
-                    f"{link}\n\n"
-                    "Thank you for your attention to this matter.\n\n"
-                    "Best regards,\n"
-                    "Applicare OS AI Team"
-                )
+                "Dear Client,\n\n"
+                "We have identified a potential issue that is currently affecting your OS system.\n\n"
+                "Details of the identified problem:\n"
+                f"{problem}\n\n"
+                "Please monitor your dashboard for updates and take any necessary actions to address the issue.\n\n"
+                "Thank you for your attention to this matter.\n\n"
+                "Best regards,\n"
+                "Applicare OS AI Team"
+            )
             
             # Create the email message
             message = MIMEMultipart()
@@ -165,11 +178,13 @@ class UserService:
             server.starttls()
             server.login(settings.MY_EMAIL, settings.EMAIL_APP_PASSWORD)
             server.sendmail(settings.MY_EMAIL, email, email_string)
+            logger.warning(f"Email sent to: {email}")
             return True
         except Exception as e:
             logger.error(f"Error: {e}")
             return False
         finally:
+            logger.debug(f"Closing the server connection.")
             server.quit()
 
     @staticmethod

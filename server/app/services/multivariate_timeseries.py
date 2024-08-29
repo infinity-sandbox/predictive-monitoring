@@ -12,6 +12,7 @@ from sklearn.preprocessing import StandardScaler
 from datetime import datetime, timedelta
 import random as rd
 import pandas as pd
+from typing import Dict, List, Any
 from sklearn.preprocessing import OneHotEncoder
 from itertools import product
 import matplotlib.pyplot as plt
@@ -27,6 +28,7 @@ import math
 from statistics import mean
 from app.services.user_service import UserService
 from app.models.parameters import ForecastResponse
+from app.services.langchain_service import LangchainAIService
 warnings.filterwarnings('ignore')
 load_dotenv()
 from logs.loggers.logger import logger_config
@@ -218,6 +220,37 @@ class MultivariateTimeSeries:
         }
         logger.info(f"FEATURE IMPORTANCE DICT: {feature_importances_dict}")
         return feature_importances_dict
+    
+    @staticmethod
+    async def _feature_selection(column: str):
+        df = MultivariateTimeSeries.ml_process()
+        clean_data = df.copy()
+        #
+        scaler = MinMaxScaler()
+        normalized_data = scaler.fit_transform(clean_data)
+        normalized_df = pd.DataFrame(normalized_data, columns=clean_data.columns, index=clean_data.index)
+        logger.info(f"Normalized Data: {normalized_df}")
+        logger.info(f"NORMALIZED SHAPE: {normalized_df.shape}, DATA SHAPE: {clean_data.shape}")
+        #
+        X = normalized_df.drop(columns=[column])
+        y = normalized_df[column]
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        rf_regressor = RandomForestRegressor(random_state=42)
+        rf_regressor.fit(X_train, y_train)
+        y_pred = rf_regressor.predict(X_test)
+        mse = mean_squared_error(y_test, y_pred)
+        logger.info(f'Mean Squared Error: {mse}')
+        feature_importances = pd.Series(rf_regressor.feature_importances_, index=X.columns)
+        feature_importances_sorted = feature_importances.sort_values(ascending=False)
+        logger.info(f"FEATURE IMPORTANCE SORTED: {feature_importances_sorted}")
+        importance_values = feature_importances_sorted.values.tolist()
+        feature_names = feature_importances_sorted.index.tolist()
+        feature_importances_dict = {
+            'features': list(feature_names),
+            'importance': list(importance_values)
+        }
+        logger.info(f"FEATURE IMPORTANCE DICT: {feature_importances_dict}")
+        return feature_importances_dict
 
     @staticmethod
     async def forecast(column: str, days: int = 1):
@@ -272,9 +305,20 @@ class MultivariateTimeSeries:
         # macro_data = macro_data.iloc[:1298]
         # TODO: increase the percentage of data used for training
         TRAIN_PERC = 0.1 # 10% of data used for training
+        
         train_size = int(len(macro_data) * TRAIN_PERC)
-        train_df = macro_data.iloc[:train_size]
-        test_df = macro_data.iloc[train_size:]
+        
+        # Total number of rows in the dataset
+        total_size = len(macro_data)
+
+        # Define the split point (10% of the total data)
+        split_point = int(total_size * TRAIN_PERC)
+        # Split the data into test and train DataFrames
+        test_df = macro_data.iloc[:total_size - split_point]  # First 90% of the data
+        train_df = macro_data.iloc[total_size - split_point:]  # Last 10% of the data
+
+        # train_df = macro_data.iloc[:train_size]
+        # test_df = macro_data.iloc[train_size:]
         #
         corr_matrix = train_df.corr().abs()
         upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
@@ -331,22 +375,23 @@ class MultivariateTimeSeries:
         n_forecast = days * 24 * 60
         predict = fitted_model.get_prediction(start=len(train_df), end=len(train_df) + n_forecast - 1)
         predictions = predict.predicted_mean
-        plot = False
-        if plot:
-            for x in features:
-                if x in predictions.columns:
-                    fig, ax = plt.subplots(figsize=(12, 5))
-                    ax.plot(train_df.index, train_df[x], label=f'Train Data ({x})', color='blue')
-                    ax.plot(test_df.index, test_df[x], label=f'Test Data ({x})', color='green')
-                    ax.plot(predictions.index, predictions[x], label=f'Predicted Data ({x})', color='red')
-                    ax.legend()
-                    plt.title(f'VARMAX Model Predictions vs Actual Data ({x})')
-                    plt.xlabel('Time')
-                    plt.ylabel('Value')
-                    plt.show()
-        logger.info(predictions.head())
-        logger.info(predictions.shape)
-        logger.info(predictions.info())
+        predictions = predictions.head(10)
+        train_df = train_df.tail(20)
+        
+        logger.info(
+            f"prediction shape: {predictions.shape}\n" \
+            f"prediction head: {predictions.head()}\n" \
+            f"prediction tail: {predictions.tail()}\n" \
+            f"prediction info: {predictions.info()}\n" \
+            f"prediction index dtype: {predictions.index.dtype}"
+            )
+        logger.info(
+            f"train_df shape: {train_df.shape}\n" \
+            f"train_df head: {train_df.head()}\n" \
+            f"train_df tail: {train_df.tail()}\n" \
+            f"train_df info: {train_df.info()}\n" \
+            f"train_df index dtype: {train_df.index.dtype}"
+        )
         # if column not in predictions.columns:
         #     logger.error(f"Column '{column}' not found in predictions.")
         #     return HTTPException(status_code=404, detail=f"Column '{column}' not found in predictions.")
@@ -364,15 +409,32 @@ class MultivariateTimeSeries:
         else:
             # If already present, keep the top 3 features list as is
             top_features_with_additional = top_3_features
-        prid_dict_list = MultivariateTimeSeries.convert_to_dict(predictions, top_features_with_additional)
+        
+        
+        # Ensure the index is in datetime format
+        if not isinstance(train_df.index, pd.DatetimeIndex):
+            train_df.index = pd.to_datetime(train_df.index)
+    
+        # Ensure the index is sorted in ascending order
+        train_df_sorted = train_df.sort_index()
+        # Get the last timestamp from the sorted index
+        last_time_train_df = train_df_sorted.index[-1]
+        # Log the last timestamp
+        logger.debug(f"Last timestamp in train_df: {last_time_train_df}")
+        
+        last_time_train_df = pd.Timestamp(last_time_train_df)
+        filtered_predictions = predictions[predictions.index > last_time_train_df]
+        logger.debug(f"Filtered predictions: {filtered_predictions.head(3)}")
+        
+        prid_dict_list = MultivariateTimeSeries.convert_to_dict(filtered_predictions, top_features_with_additional)
         train_dict_list = MultivariateTimeSeries.convert_to_dict(train_df, top_features_with_additional)
-        test_dict_list = MultivariateTimeSeries.convert_to_dict(test_df, top_features_with_additional)
+        test_dict_list = MultivariateTimeSeries.convert_to_dict(test_df.tail(1), top_features_with_additional)
         logger.info(f"Feature importance dictionary: {feature_importances_dict}")
-        logger.info(f"{prid_dict_list[0].keys()}")
+        logger.debug(f"{prid_dict_list[0].keys()}")
         return prid_dict_list, feature_importances_dict, train_dict_list, test_dict_list
     
     @staticmethod
-    async def forecast_loop(column: str, days: int = 1):
+    async def _forecast_loop(column: str, days: int = 1):
         macro_data = MultivariateTimeSeries.ml_process()
         features = macro_data.columns.tolist()
         logger.info(f"Features: {features}")
@@ -390,7 +452,7 @@ class MultivariateTimeSeries:
                 macro_data[feature] = macro_data[feature].diff().dropna()
         # Drop row that are not inside macro_data (for dropdown values) 
         if column not in macro_data.columns:
-            logger.error(f"Column '{column}' not found in predictions.")
+            logger.warning(f"Column '{column}' not found in predictions.")
             return HTTPException(status_code=404, detail=f"Column '{column}' not found in predictions.")
         macro_data = macro_data.dropna()
         if macro_data.shape[1] < 2:
@@ -423,7 +485,7 @@ class MultivariateTimeSeries:
         # DEBUG:remove this line when deploying (proven this casues maxlags too large error)
         # macro_data = macro_data.iloc[:1298]
         # TODO: increase the percentage of data used for training
-        TRAIN_PERC = 0.1 # 10% of data used for training
+        TRAIN_PERC = 0.01 # 10% of data used for training
         train_size = int(len(macro_data) * TRAIN_PERC)
         train_df = macro_data.iloc[:train_size]
         test_df = macro_data.iloc[train_size:]
@@ -488,7 +550,8 @@ class MultivariateTimeSeries:
         logger.info(predictions.shape)
         logger.info(predictions.info())
         #
-        issues = MultivariateTimeSeries.send_signal(predictions)
+        # issues = MultivariateTimeSeries.send_signal(predictions)
+        issues = await LangchainAIService.problem_detection()
         # NOTE: OUTPUT sample
         # {
         #     'physical_mem_free': [Timestamp('2024-07-06 00:03:00')], # Falling below threshold 5
@@ -502,6 +565,11 @@ class MultivariateTimeSeries:
         #     'cpuusedpercent': [Timestamp('2024-07-06 00:01:00')], # Exceeding threshold 14
         #     'mem_used_per': [Timestamp('2024-07-06 00:04:00')] # Exceeding threshold 0.02
         # }
+        return issues
+    
+    @staticmethod
+    async def forecast_loop():
+        issues = await LangchainAIService.problem_detection()
         return issues
     
     @staticmethod
@@ -590,20 +658,40 @@ class MultivariateTimeSeries:
         return issues
     
     @staticmethod
+    def has_empty_lists_or_none_values(d: Dict[str, List[Any]]) -> bool:
+        
+        """
+        Checks if the dictionary contains any empty lists or lists with only None values.
+
+        Args:
+            d (dict): The dictionary to check.
+
+        Returns:
+            bool: True if there are empty lists or lists with only None values, False otherwise.
+        """
+        for key, value in d.items():
+            if isinstance(value, list):
+                if not value:  # Check if the list is empty
+                    return True
+                if all(v is None for v in value):  # Check if all values in the list are None
+                    return True
+        return False
+
+    @staticmethod
     async def send_signal(df):
         # Define thresholds for each column
         # Example usage
         thresholds = {
             'physical_mem_free': (5, 'min'),
-            'page_file_usage': (500, 'max'),
+            'page_file_usage': (49489843, 'max'),
             'processes': (0, 'min'),
-            'tcp_connections': (15, 'max'),
-            'cpu_user': (16, 'max'),
-            'cpu_sys': (7, 'max'),
-            'sys_load': (2, 'max'),
-            'swap_pageout': (10, 'max'),
-            'cpuusedpercent': (14, 'max'),
-            'mem_used_per': (0.02, 'max')
+            'tcp_connections': (200, 'max'),
+            'cpu_user': (100, 'max'),
+            'cpu_sys': (100, 'max'),
+            'sys_load': (50, 'max'),
+            'swap_pageout': (200, 'max'),
+            'cpuusedpercent': (100, 'max'),
+            'mem_used_per': (70, 'max')
         }
         # Find indices or timestamps where values exceed thresholds
         issues = await MultivariateTimeSeries.find_issues_based_on_thresholds(df, thresholds)

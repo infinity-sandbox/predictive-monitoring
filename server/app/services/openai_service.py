@@ -110,3 +110,39 @@ class OpenAIService:
         return system_msg
     
     
+    @staticmethod
+    async def classify(user_message: str) -> str:
+        try:
+            PROMPT_PATH=os.path.join(settings.PROMPT_DIR, "classification_template.txt")
+            with open(PROMPT_PATH, "r") as file:
+                PROMPT = file.read()
+        except FileNotFoundError as e:
+            logger.error(f"File not found: {e}")
+            raise FileNotFoundError(f"File not found: {e}")
+        API_RESPONSE = await OpenAIService.get_completion(
+            [{"role": "user", "content": PROMPT.format(user_message=user_message)}],
+            model=settings.MODEL,
+            logprobs=True,
+            top_logprobs=1
+        )
+        top_three_logprobs = API_RESPONSE.choices[0].logprobs.content[0].top_logprobs
+        content = ""
+        system_msg = str(API_RESPONSE.choices[0].message.content)
+
+        for i, logprob in enumerate(top_three_logprobs, start=1):
+            linear_probability = np.round(np.exp(logprob.logprob) * 100, 2)
+            if logprob.token in ["problem", "cause"] and linear_probability >= 95.00:
+                content += (
+                    f"\n"
+                    f"output token {i}: {system_msg},\n"
+                    f"logprobs: {logprob.logprob}, \n"
+                    f"linear probability: {linear_probability} \n"
+                )
+                logger.debug(f"{content} \nclassification: {logprob.token}")
+                classification = str(system_msg)
+            else:
+                classification = ""
+                logger.warning(f"classification: {classification}, logprobs confidence is less than 95%.")
+        return classification
+    
+    

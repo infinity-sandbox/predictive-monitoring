@@ -4,7 +4,8 @@ Based on the table schema below, write a SQL query that would answer the user's 
 
 Question: {question}
 
-Your response was:
+
+And Your response was:
 SQL Response: 
 {response}
 

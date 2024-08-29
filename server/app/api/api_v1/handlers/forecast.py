@@ -1,4 +1,5 @@
 import asyncio
+import json
 from fastapi import APIRouter, HTTPException, Header, status
 from app.services.multivariate_timeseries import MultivariateTimeSeries
 from fastapi.responses import JSONResponse
@@ -24,44 +25,53 @@ async def get_dropdown_data():
     return dropdowns
 
 @api.websocket("/forecast/loop")
-async def forecaster_loop(websocket: WebSocket, authorization: str = Header(...), refresh_token: str = Header(...)):
+async def forecaster_loop(websocket: WebSocket):
     await websocket.accept()
     try:
+        data = await websocket.receive_text()
+        message = json.loads(data)
+        authorization = message.get("authorization")
+        refresh_token = message.get("refresh_token")
+        
+        if not authorization or not refresh_token:
+            raise WebSocketDisconnect(code=403)
+
         user = await UserService.decode_token(authorization, refresh_token)
+        
+        # Proceed with the loop as before
         dropdowns, columns = await MultivariateTimeSeries.get_dropdowns()
 
         while True:
             problem_found = False
-            for column in columns:
-                try:
-                    problem = await MultivariateTimeSeries.forecast_loop(column=column)
-                    if problem:
-                        problem_found = True
-                        
-                        # Extract problematic columns and their timestamps
-                        problematic_columns_with_timestamps = {
-                            col: timestamps for col, timestamps in problem.items() if timestamps
-                        }
-                        
-                        for problematic, timestamps in problematic_columns_with_timestamps.items():
-                            await UserService.send_email_request(user.email, problematic, timestamps)
-                            logger.info(f"Found an issue for the upcoming day: {problematic}. Sending an email to {user.email}...")
-                            # Send the problem string to the client
-                            await websocket.send_text(problematic)
-                            # Optionally, you can sleep for a short time to avoid tight looping
-                            await asyncio.sleep(60)  # Sleep for 10 seconds before checking the next column
-                    else:
-                        problem_found = False
-                        logger.warning("No issues were found for the upcoming day.")
-                        
-                except Exception as e:
+            try:
+                problem = await MultivariateTimeSeries.forecast_loop()
+                logger.warning(f"Problem: {problem}")
+                pr = MultivariateTimeSeries.has_empty_lists_or_none_values(problem)
+                if not pr:
+                    problem_found = True
+                    problematic_columns_with_timestamps = {
+                        col: timestamps for col, timestamps in problem.items() if timestamps
+                    }
+                    logger.warning(f"Problematic columns with timestamps: {problematic_columns_with_timestamps}")
+                    for problematic, timestamps in problematic_columns_with_timestamps.items():
+                        await UserService._send_email_request(user.email, problematic, timestamps)
+                        logger.info(f"Found an issue for the upcoming day: {problematic}. Sending an email to {user.email}...")
+                        await websocket.send_text(problematic)
+                        await asyncio.sleep(180)
+                else:
                     problem_found = False
-                    logger.error(f"{e}")
-                    
-                if not problem_found:
-                    logger.warning("No issues were found for the upcoming day. Rechecking in 24 hours...")
-                    await websocket.send_text("")
-                    await asyncio.sleep(86400)  # Wait for 24 hours before running the loop again
+                    logger.warning("No issues were found for the upcoming day.")
+                    await asyncio.sleep(180)
+
+            except Exception as e:
+                problem_found = False
+                await asyncio.sleep(180)
+                logger.error(f"{e}")
+            
+            if not problem_found:
+                logger.warning("No issues were found for the upcoming day. Rechecking in 24 hours...")
+                await websocket.send_text("")
+                await asyncio.sleep(86400)
 
     except WebSocketDisconnect:
         logger.info("Client disconnected")

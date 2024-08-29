@@ -1,5 +1,9 @@
 Based on the table schema below, write a SQL query that would answer the user's question:
+
+Schema:
 {schema}
 
-Question: {question}
+Question: 
+{question}
+
 SQL Query:

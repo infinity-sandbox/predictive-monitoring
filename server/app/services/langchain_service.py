@@ -1,5 +1,7 @@
+from datetime import datetime
 from langchain_community.utilities import SQLDatabase
 import langchain_core
+import pandas as pd
 from app.core.config import settings
 from app.services.openai_service import OpenAIService
 from langchain_core.prompts import ChatPromptTemplate
@@ -17,7 +19,12 @@ llm = ChatOpenAI(openai_api_key=settings.OPENAI_API_KEY)
 class LangchainAIService(OpenAIService):
     @staticmethod
     def connection():
-        mysql_uri = f'mysql+mysqlconnector://{settings.MYSQL_DB_USER}:{settings.MYSQL_DB_PASSWORD}@{settings.MYSQL_DB_HOST}:{settings.MYSQL_DB_PORT}/{settings.MYSQL_DB}'
+        mysql_uri = f'mysql+mysqlconnector://' \
+        f'{settings.MYSQL_DB_USER}' \
+        f':{settings.MYSQL_DB_PASSWORD}' \
+        f'@{settings.MYSQL_DB_HOST}' \
+        f':{settings.MYSQL_DB_PORT}' \
+        f'/{settings.MYSQL_DB}'
         db = SQLDatabase.from_uri(mysql_uri)
         return db
         
@@ -25,13 +32,71 @@ class LangchainAIService(OpenAIService):
     def get_schema():
         db = LangchainAIService.connection()
         if hasattr(db, 'get_table_info'):
-            schema = db.get_table_info()
+            schema = db.get_table_info(table_names=['synth_txn', 
+                                                    # 'business_transactions', 
+                                                    'alert_queue', 
+                                                    'eum_summary_day', 
+                                                    'eum_visits', 
+                                                    'http_errors',
+                                                    'oshistory_detail'])
         else:
             raise TypeError("The provided 'db' object does not have the 'get_table_info' method.")
-        schema = LangchainAIService.truncate_response(schema, 10000)
+        schema = LangchainAIService.truncate_response(schema, 90000)
         logger.warning(f'SCHEMA: {schema}')
         return schema
+    
+    @staticmethod
+    async def problem_detection():
+        logger.info("Detecting problems...")
+        from app.services.multivariate_timeseries import MultivariateTimeSeries
+        df = MultivariateTimeSeries.connect_db()
+        # Sort the DataFrame by the 'rl' column in descending order
+        sorted_df = df.sort_values(by='rl', ascending=False)
+        
+        # Get the last 3 rows of the sorted DataFrame
+        last_three_rows = sorted_df.head(3)
+        issues = await MultivariateTimeSeries.send_signal(last_three_rows)
+        logger.info(f"Issues detected: {issues}")
+        return issues
+    
+    @staticmethod
+    async def if_anomaly():
+        # Check if the dictionary itself is empty
+        data_dict = await LangchainAIService.problem_detection()
+        if not data_dict:
+            logger.debug("The dictionary is empty.")
+            return False, data_dict
 
+        # Check if all the lists inside the dictionary are empty
+        all_lists_empty = all(not value for value in data_dict.values())
+
+        if all_lists_empty:
+            logger.warning("All lists in the dictionary are empty. (no issues detected)")
+            return False, data_dict
+        else:
+            logger.warning("The dictionary is not empty and not all lists are empty. " \
+                           "(Problem detected)")
+            return True, data_dict
+        
+    @staticmethod
+    async def if_cause():
+        # Check if the dictionary itself is empty
+        data_dict = await LangchainAIService.problem_detection()
+        if not data_dict:
+            logger.debug("The dictionary is empty.")
+            return False, data_dict
+
+        # Check if all the lists inside the dictionary are empty
+        all_lists_empty = all(not value for value in data_dict.values())
+
+        if all_lists_empty:
+            logger.warning("All lists in the dictionary are empty. (no issues detected)")
+            return False, data_dict
+        else:
+            logger.warning("The dictionary is not empty and not all lists are empty. " \
+                           "(Problem detected)")
+            return True, data_dict
+        
     @staticmethod
     def get_prompts_chain(query_template, response_template, error_query_template):
         query_prompt = ChatPromptTemplate.from_template(query_template)
@@ -87,9 +152,11 @@ class LangchainAIService(OpenAIService):
         response_template = LangchainAIService.read_prompt(PROMPT_PATH_RESPONSE)
         error_query_template = LangchainAIService.read_prompt(PROMPT_PATH_ERROR)
         #
-        sql_chain, error_sql_chain, response_sql_chain = LangchainAIService.get_prompts_chain(query_template, 
-                                                                                              response_template, 
-                                                                                              error_query_template)
+        (sql_chain, 
+         error_sql_chain, 
+         response_sql_chain) = LangchainAIService.get_prompts_chain(query_template,
+                                                                    response_template, 
+                                                                    error_query_template)
         return sql_chain, error_sql_chain, response_sql_chain
 
     @staticmethod
@@ -109,7 +176,8 @@ class LangchainAIService(OpenAIService):
                     logger.error(f"Maximum retries reached. Exiting...")
                     return "I don't know the answer or answer not found", "None"
                 # Generate a new query based on the error
-                query = error_sql_chain.invoke({"question": question, "response": query, "error": str(e)})
+                query = error_sql_chain.invoke({"question": question, 
+                                                "response": query, "error": str(e)})
                 logger.warning(f"Retrying query... Attempt {attempt + 1} of {max_retries}")
                 
     @staticmethod
@@ -130,26 +198,63 @@ class LangchainAIService(OpenAIService):
     
     @staticmethod
     async def full_chain(question: str, username: str) -> str:
-        sql_chain, error_sql_chain, response_sql_chain = LangchainAIService.get_chains()
-        
-        # Generate the SQL query from the question
-        query = sql_chain.invoke({"question": question})
-        
-        # Run the generated SQL query with retries
-        try:
-            response, query = LangchainAIService.run_query_with_retries(query, question)
-            logger.info(f"response: {response}\ntype: {type(response)}")
-            logger.debug(f"SQL Response: {response}\nNew Query: {query}")
-            response = LangchainAIService.truncate_response(response)
-            result = response_sql_chain.invoke({"question": question, "query": query, "response": response, "username": username})
-            result = str(result)
-            logger.debug(f"Natural Language Response: {result}")
-            return result
-        # Generate the natural language response using the response_prompt
-        except Exception as e:
-            logger.error(f"Error getting response: {e}")
-            return f"Error getting response: {e}"
-        
+        if await OpenAIService.classify(question) == "problem":
+            try:
+                is_anomaly, issues = await LangchainAIService.if_anomaly()
+                if is_anomaly:
+                    non_empty_issues = {key: value for key, value in issues.items() if value}
+                    
+                    def convert_unix_timestamps(values):
+                        return [
+                            datetime.utcfromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S') 
+                            for ts in values]
+                    formatted_issues = {key for key, value in non_empty_issues.items()}
+                    return f"Here are the issues detected: " \
+                        f"The report includes details about various problems and their timestamps," \
+                        f"showing when each issue occurred." \
+                        f"\n{formatted_issues}"
+                else:
+                    return f"No issues have been detected so far, {username}."
+            except Exception as e:
+                logger.error(f"Error getting response: {e}")
+                return f"Error getting response: {e}"
+        elif await OpenAIService.classify(question) == "cause":
+            try:
+                is_anomaly, issues = await LangchainAIService.if_anomaly()
+                if is_anomaly:
+                    non_empty_keys = [key for key, value in issues.items() if value]
+                    from app.services.multivariate_timeseries import MultivariateTimeSeries
+                    feature_importances_dict = await MultivariateTimeSeries._feature_selection(
+                        non_empty_keys[0])
+                    return f"Here are the causes detected:" \
+                        f"\n{feature_importances_dict['features'][:3]}"
+                else:
+                    return f"No issues and no causes have been detected so far, {username}."
+            except Exception as e:
+                logger.error(f"Error getting response: {e}")
+                return f"Error getting response: {e}"
+        else:
+            sql_chain, error_sql_chain, response_sql_chain = LangchainAIService.get_chains()
+            
+            # Generate the SQL query from the question
+            query = sql_chain.invoke({"question": question})
+            
+            # Run the generated SQL query with retries
+            try:
+                response, query = LangchainAIService.run_query_with_retries(query, question)
+                logger.info(f"response: {response}\ntype: {type(response)}")
+                logger.debug(f"SQL Response: {response}\nNew Query: {query}")
+                response = LangchainAIService.truncate_response(response)
+                result = response_sql_chain.invoke({"question": question, "query": query, 
+                                                    "response": response, "username": username})
+                result = str(result)
+                logger.debug(f"Natural Language Response: {result}")
+                return result
+            # Generate the natural language response using the response_prompt
+            except Exception as e:
+                logger.error(f"Error getting response: {e}")
+                return f"Error getting response: {e}"
+            
 if __name__ == "__main__":
     # Example user question
     user_question = "When does the minimum cpu connection occured?"

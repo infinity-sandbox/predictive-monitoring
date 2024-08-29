@@ -18,11 +18,12 @@ const Chatbot: React.FC = () => {
   const refreshToken = localStorage.getItem('refreshToken');
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
+  // Async function to send message
   const sendMessage = async () => {
     if (input.trim() === '') return;
 
     const userMessage: Message = { text: input, type: 'user' };
-    setMessages([...messages, userMessage]);
+    setMessages((prevMessages) => [...prevMessages, userMessage]);
     setInput('');
     setLoading(true);
 
@@ -38,15 +39,16 @@ const Chatbot: React.FC = () => {
         }
       );
       const botMessage: Message = { text: response.data.response, type: 'bot' };
-      setLoading(false);
       setMessages((prevMessages) => [...prevMessages, botMessage]);
     } catch (error) {
-      setLoading(false);
       const errorMessage: Message = { text: 'Error: Unable to get a response.', type: 'bot' };
       setMessages((prevMessages) => [...prevMessages, errorMessage]);
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
     if (initialMessageVisible) {
@@ -54,12 +56,14 @@ const Chatbot: React.FC = () => {
     }
   };
 
+  // Handle key press to send message on Enter key
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       sendMessage();
     }
   };
 
+  // Scroll to the bottom of the chat messages
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -71,6 +75,7 @@ const Chatbot: React.FC = () => {
       <div className="chat-messages">
         {initialMessageVisible && (
           <div className="initial-message">
+            {/* Initial message content, if any */}
           </div>
         )}
         {messages.map((msg, index) => (
@@ -96,7 +101,7 @@ const Chatbot: React.FC = () => {
           onKeyPress={handleKeyPress}
           placeholder="Talk to your data ... "
         />
-        <button className="send-button" onClick={sendMessage} >
+        <button className="send-button" onClick={sendMessage}>
           Send
         </button>
       </div>

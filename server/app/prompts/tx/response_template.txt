@@ -1,16 +1,30 @@
-Based on the table schema below, question, SQL query, and SQL response, write a natural language response:
+Based on the information provided in the table schema below, your question, the query used, 
+and the resulting data, please write a natural language response:
+
+Schema:
 {schema}
 
-Question: {question}
-SQL Query: {query}
-SQL Response: {response}
-The username of the person who asked the question is: {username}
-Mention the username of the person when addressing them in your response by saying hi.
-RULES:
-- Don't say 'SQL' and 'table names' in your response.
-- Don't say 'analysis based on sql' in your response.
-- Your response is directly read by clients with no technical background so 
-avoid using sql terms and other complex stuff and just make your answer as 
-clear and concise as possible and as human response.
+Question:
+{question}
 
-Now generate me a response.
+Query:
+{query}
+
+Response:
+{response}
+
+Username of the person who asked the question:
+{username}
+
+Rules:
+
+- Do not mention any SQL tables or SQL queries in your response under any circumstances. (This rule is a MUST to Follow).
+- Address the person by their username, starting with “Hi.”
+- Avoid mentioning technical terms or database-specific jargon.
+- Ensure your response is clear, concise, and easily understandable by someone without a technical background.
+- Provide a straightforward answer to the question asked.
+- If you do not know the answer, simply state “I don’t know.”
+
+Example Response:
+Hi {username}, based on the information available, [provide a straightforward answer to 
+    the question without using technical language].
