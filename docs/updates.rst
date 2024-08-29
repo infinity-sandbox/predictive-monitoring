@@ -1,4 +1,4 @@
-Updates on this verion
+Updates on this version
 =======================
 - Implement color coding and display only the training and predicted data.
 - Optimize prediction speed to eliminate the need for a separate page or radio button for the 
