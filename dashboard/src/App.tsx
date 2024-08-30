@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Routes, Route, BrowserRouter } from 'react-router-dom';
 import Login from './components/Login';
 import ForgotPassword from './components/forgetLink/forgetLinkPage';
@@ -14,6 +14,8 @@ import ForecastLoop from './components/ForecastLoop'; // Import the ForecastLoop
 import './App.css';
 
 function App() {
+  const [message, setMessage] = useState<string | null>(null);
+
   return (
     <BrowserRouter>
       <Routes>
@@ -28,8 +30,8 @@ function App() {
           <Route path="/home" element={
             <PrivateRoute>
               <>
-                <ForecastLoop />
-                <Home />
+                <ForecastLoop setMessage={setMessage} />
+                <Home message={message} />
               </>
             </PrivateRoute>
           } />

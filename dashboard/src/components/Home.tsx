@@ -1,20 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/Home.css'; // Ensure the CSS file is correctly imported
 
-const Homepage: React.FC = () => {
-  const [message, setMessage] = useState('No problem detected');
+interface HomeProps {
+  message: string | null;
+}
+
+const Homepage: React.FC<HomeProps> = ({ message }) => {
   const [isCalculating, setIsCalculating] = useState(false);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
-      if (isCalculating) {
-        setMessage('No problem detected');
-        setIsCalculating(false);
-      } else {
-        setMessage('Calculating problem ... ');
-        setIsCalculating(true);
-      }
-    }, 5000); // 5 minutes in milliseconds
+      setIsCalculating(!isCalculating);
+    }, 5000); // 5 seconds for demonstration; adjust as needed
 
     // Cleanup on component unmount
     return () => clearInterval(intervalId);
@@ -23,7 +20,9 @@ const Homepage: React.FC = () => {
   return (
     <div className="homepage-container">
       <div className="circle"></div>
-      <div className="message">{message}</div>
+      <div className="message">
+        {message || 'No problem detected'} {/* Show default message only if no message received */}
+      </div>
     </div>
   );
 };

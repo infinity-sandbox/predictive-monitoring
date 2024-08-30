@@ -43,6 +43,7 @@ mkdir -p "$(dirname "$ENV_FILE_DEV")"
 cat <<EOF > "$ENV_FILE_DEV"
 REACT_APP_BACKEND_API_URL="http://0.0.0.0:8000"
 REACT_APP_FRONTEND_API_URL="http://0.0.0.0:3000"
+REACT_APP_WEBSOCKET_URL="ws://0.0.0.0:8000"
 EOF
 
 echo "Environment variables written to $ENV_FILE_DEV"

@@ -47,6 +47,7 @@ async def forecaster_loop(websocket: WebSocket):
                 problem = await MultivariateTimeSeries.forecast_loop()
                 logger.warning(f"Problem: {problem}")
                 pr = MultivariateTimeSeries.has_empty_lists_or_none_values(problem)
+                logger.warning(f"Problematic bool: {pr}")
                 if not pr:
                     problem_found = True
                     problematic_columns_with_timestamps = {
@@ -55,23 +56,23 @@ async def forecaster_loop(websocket: WebSocket):
                     logger.warning(f"Problematic columns with timestamps: {problematic_columns_with_timestamps}")
                     for problematic, timestamps in problematic_columns_with_timestamps.items():
                         await UserService._send_email_request(user.email, problematic, timestamps)
-                        logger.info(f"Found an issue for the upcoming day: {problematic}. Sending an email to {user.email}...")
-                        await websocket.send_text(problematic)
+                        logger.info(f"Found an issue: {problematic}. Sending an email to {user.email}...")
+                        await websocket.send_text(f"An issue was detected in {problematic} ...")
                         await asyncio.sleep(180)
                 else:
                     problem_found = False
                     logger.warning("No issues were found for the upcoming day.")
+                    await websocket.send_text("No issue detected")
                     await asyncio.sleep(180)
 
             except Exception as e:
                 problem_found = False
-                await asyncio.sleep(180)
                 logger.error(f"{e}")
             
             if not problem_found:
-                logger.warning("No issues were found for the upcoming day. Rechecking in 24 hours...")
-                await websocket.send_text("")
-                await asyncio.sleep(86400)
+                logger.warning("No issues were found for the upcoming day...")
+                await websocket.send_text("No issue detected")
+                await asyncio.sleep(180)
 
     except WebSocketDisconnect:
         logger.info("Client disconnected")

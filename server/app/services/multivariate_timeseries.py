@@ -35,6 +35,7 @@ from logs.loggers.logger import logger_config
 logger = logger_config(__name__)
 import signal
 from app.core.config import settings
+from utils.thresholds import oshistory_detail_thresholds
 
 
 class MultivariateTimeSeries:
@@ -410,7 +411,6 @@ class MultivariateTimeSeries:
             # If already present, keep the top 3 features list as is
             top_features_with_additional = top_3_features
         
-        
         # Ensure the index is in datetime format
         if not isinstance(train_df.index, pd.DatetimeIndex):
             train_df.index = pd.to_datetime(train_df.index)
@@ -669,32 +669,14 @@ class MultivariateTimeSeries:
         Returns:
             bool: True if there are empty lists or lists with only None values, False otherwise.
         """
-        for key, value in d.items():
-            if isinstance(value, list):
-                if not value:  # Check if the list is empty
-                    return True
-                if all(v is None for v in value):  # Check if all values in the list are None
-                    return True
-        return False
+        return all(not value for value in d.values())
 
     @staticmethod
     async def send_signal(df):
         # Define thresholds for each column
         # Example usage
-        thresholds = {
-            'physical_mem_free': (5, 'min'),
-            'page_file_usage': (49489843, 'max'),
-            'processes': (0, 'min'),
-            'tcp_connections': (50, 'max'),
-            'cpu_user': (100, 'max'),
-            'cpu_sys': (100, 'max'),
-            'sys_load': (50, 'max'),
-            'swap_pageout': (200, 'max'),
-            'cpuusedpercent': (100, 'max'),
-            'mem_used_per': (70, 'max')
-        }
         # Find indices or timestamps where values exceed thresholds
-        issues = await MultivariateTimeSeries.find_issues_based_on_thresholds(df, thresholds)
+        issues = await MultivariateTimeSeries.find_issues_based_on_thresholds(df, oshistory_detail_thresholds)
         logger.debug(f"ISSUES: {issues}")
         return issues
     
