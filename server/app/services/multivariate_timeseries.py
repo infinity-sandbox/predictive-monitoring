@@ -92,7 +92,8 @@ class MultivariateTimeSeries:
             elif data_cleaned[column].dtype == 'datetime64[ns]':
                 # For datetime64 columns, forward fill
                 data_cleaned[column].fillna(method='ffill', inplace=True)
-                # Alternatively, you can use backward fill with: data_cleaned[column].fillna(method='bfill', inplace=True)
+                # Alternatively, you can use backward fill with: data_cleaned[column]. \
+                # fillna(method='bfill', inplace=True)
         logger.info('Data cleaned successfully')
         return data_cleaned
 
@@ -102,7 +103,8 @@ class MultivariateTimeSeries:
         # Initialize OneHotEncoder without sparse parameter
         encoder = OneHotEncoder()
         # Initialize DataFrame to store encoded features
-        encoded_features = pd.DataFrame(index=data_cleaned.index)  # Start with index from data_cleaned
+        encoded_features = pd.DataFrame(index=data_cleaned.index)  
+        # Start with index from data_cleaned
         # Loop through columns
         for column in data_cleaned.columns:
             if data_cleaned[column].dtype == 'object':
@@ -110,7 +112,8 @@ class MultivariateTimeSeries:
                 encoded_column = encoder.fit_transform(data_cleaned[[column]])
                 # Convert sparse matrix to DataFrame
                 encoded_column_df = pd.DataFrame(encoded_column.toarray(), 
-                                                 columns=encoder.get_feature_names_out([column]), index=data_cleaned.index)
+                                                 columns=encoder.get_feature_names_out([column]), 
+                                                 index=data_cleaned.index)
                 encoded_features = pd.concat([encoded_features, encoded_column_df], axis=1)
             elif data_cleaned[column].dtype == 'int64' or data_cleaned[column].dtype == 'float64':
                 # Use numerical columns as-is
@@ -159,7 +162,8 @@ class MultivariateTimeSeries:
         var_model = VARMAX(train_df, order=(4,0),enforce_stationarity= True)
         fitted_model = var_model.fit(disp=False)
         logger.info(fitted_model.summary())
-        predict = fitted_model.get_prediction(start=len(train_df),end=len(train_df) + n_forecast-1)
+        predict = fitted_model.get_prediction(
+            start=len(train_df),end=len(train_df) + n_forecast-1)
         predictions=predict.predicted_mean
         pcols = []
         for i in range(len(features)):
@@ -176,8 +180,10 @@ class MultivariateTimeSeries:
         # Show the plot
         plt.show()
         for i in range(len(features)):
-            rmse=math.sqrt(mean_squared_error(predictions[str(features[i]) + "_predicted"],test_df[features[i]]))
-            logger.info('Mean value of {} is : {}. Root Mean Squared Error is :{}'.format(features[i],mean(test_df[features[i]]),rmse))
+            rmse=math.sqrt(mean_squared_error(
+                predictions[str(features[i]) + "_predicted"],test_df[features[i]]))
+            logger.info('Mean value of {} is : {}. Root Mean Squared Error is :{}'.format(
+                features[i],mean(test_df[features[i]]),rmse))
         return predictions, test_df, features
         
     @staticmethod
@@ -198,7 +204,8 @@ class MultivariateTimeSeries:
         #
         scaler = MinMaxScaler()
         normalized_data = scaler.fit_transform(clean_data)
-        normalized_df = pd.DataFrame(normalized_data, columns=clean_data.columns, index=clean_data.index)
+        normalized_df = pd.DataFrame(
+            normalized_data, columns=clean_data.columns, index=clean_data.index)
         logger.info(f"Normalized Data: {normalized_df}")
         logger.info(f"NORMALIZED SHAPE: {normalized_df.shape}, DATA SHAPE: {clean_data.shape}")
         #
@@ -229,7 +236,8 @@ class MultivariateTimeSeries:
         #
         scaler = MinMaxScaler()
         normalized_data = scaler.fit_transform(clean_data)
-        normalized_df = pd.DataFrame(normalized_data, columns=clean_data.columns, index=clean_data.index)
+        normalized_df = pd.DataFrame(
+            normalized_data, columns=clean_data.columns, index=clean_data.index)
         logger.info(f"Normalized Data: {normalized_df}")
         logger.info(f"NORMALIZED SHAPE: {normalized_df.shape}, DATA SHAPE: {clean_data.shape}")
         #
@@ -273,17 +281,21 @@ class MultivariateTimeSeries:
         # Drop row that are not inside macro_data (for dropdown values) 
         if column not in macro_data.columns:
             logger.error(f"Column '{column}' not found in predictions.")
-            return HTTPException(status_code=404, detail=f"Column '{column}' not found in predictions.")
+            return HTTPException(
+                status_code=404, detail=f"Column '{column}' not found in predictions.")
         macro_data = macro_data.dropna()
         if macro_data.shape[1] < 2:
-            logger.error("Not enough features left after filtering for stationarity and constant series.")
+            logger.error(
+                "Not enough features left after filtering for stationarity and constant series.")
             return None, None, None, None
         
         # Define thresholds
-        small_data_threshold = 3000
+        small_data_threshold = 5000
         large_data_threshold = 10000
 
-        def calculate_maxlags(num_observations, max_lags_for_small_data=10, max_lags_for_large_data=20):
+        def calculate_maxlags(num_observations, 
+                              max_lags_for_small_data=10, 
+                              max_lags_for_large_data=20):
             if num_observations <= small_data_threshold:
                 logger.debug("Small dataset detected.")
                 # For small datasets
@@ -296,14 +308,7 @@ class MultivariateTimeSeries:
                 logger.debug("Medium dataset detected.")
                 # For medium datasets
                 return min(num_observations // 4, num_observations - 1)
-        # NOTE: this is just for testing purposes (selects small portion of data)
-        # train_df = macro_data[:-12]
-        # test_df = macro_data[-12:]
-        # logger.info(train_df.head())
-        # logger.info(train_df.info())
-        # Split data into training and testing based on time
-        # DEBUG:remove this line when deploying (proven this casues maxlags too large error)
-        # macro_data = macro_data.iloc[:1298]
+            
         # TODO: increase the percentage of data used for training
         TRAIN_PERC = 0.1 # 10% of data used for training
         
@@ -338,8 +343,6 @@ class MultivariateTimeSeries:
             logger.debug(f"ROWS -> (Number of observations): {num_observations}")
             logger.debug(f"COLUMNS -> Number of equations: {num_equations}")
             # Calculate maxlags as a fraction of the number of observations
-            # maxlags = min(20, num_observations // 4)
-            # maxlags = min(10, num_observations // 4, num_observations - 1)
             maxlags = calculate_maxlags(num_observations)
             logger.debug(f"Maxlags: {maxlags}")
             
@@ -374,7 +377,8 @@ class MultivariateTimeSeries:
             return None, None, None, None
         logger.info(fitted_model.summary())
         n_forecast = days * 24 * 60
-        predict = fitted_model.get_prediction(start=len(train_df), end=len(train_df) + n_forecast - 1)
+        predict = fitted_model.get_prediction(
+            start=len(train_df), end=len(train_df) + n_forecast - 1)
         predictions = predict.predicted_mean
         predictions = predictions.head(10)
         train_df = train_df.tail(20)
@@ -395,10 +399,12 @@ class MultivariateTimeSeries:
         )
         # if column not in predictions.columns:
         #     logger.error(f"Column '{column}' not found in predictions.")
-        #     return HTTPException(status_code=404, detail=f"Column '{column}' not found in predictions.")
+        #     return HTTPException(status_code=404, detail=f"Column '{column}' \
+        # not found in predictions.")
         feature_importances_dict = MultivariateTimeSeries.feature_selection(column, predictions)
         # Pair the features with their importances
-        features_with_importances = list(zip(feature_importances_dict['features'], feature_importances_dict['importance']))
+        features_with_importances = list(
+            zip(feature_importances_dict['features'], feature_importances_dict['importance']))
         # Sort the pairs by importance values in descending order
         sorted_features = sorted(features_with_importances, key=lambda x: x[1], reverse=True)
         # Extract the top 3 features
@@ -426,9 +432,12 @@ class MultivariateTimeSeries:
         filtered_predictions = predictions[predictions.index > last_time_train_df]
         logger.debug(f"Filtered predictions: {filtered_predictions.head(3)}")
         
-        prid_dict_list = MultivariateTimeSeries.convert_to_dict(filtered_predictions, top_features_with_additional)
-        train_dict_list = MultivariateTimeSeries.convert_to_dict(train_df, top_features_with_additional)
-        test_dict_list = MultivariateTimeSeries.convert_to_dict(test_df.tail(1), top_features_with_additional)
+        prid_dict_list = MultivariateTimeSeries.convert_to_dict(filtered_predictions, 
+                                                                top_features_with_additional)
+        train_dict_list = MultivariateTimeSeries.convert_to_dict(train_df, 
+                                                                 top_features_with_additional)
+        test_dict_list = MultivariateTimeSeries.convert_to_dict(test_df.tail(1), 
+                                                                top_features_with_additional)
         logger.info(f"Feature importance dictionary: {feature_importances_dict}")
         logger.debug(f"{prid_dict_list[0].keys()}")
         return prid_dict_list, feature_importances_dict, train_dict_list, test_dict_list
@@ -453,17 +462,21 @@ class MultivariateTimeSeries:
         # Drop row that are not inside macro_data (for dropdown values) 
         if column not in macro_data.columns:
             logger.warning(f"Column '{column}' not found in predictions.")
-            return HTTPException(status_code=404, detail=f"Column '{column}' not found in predictions.")
+            return HTTPException(
+                status_code=404, detail=f"Column '{column}' not found in predictions.")
         macro_data = macro_data.dropna()
         if macro_data.shape[1] < 2:
-            logger.error("Not enough features left after filtering for stationarity and constant series.")
+            logger.error(
+                "Not enough features left after filtering for stationarity and constant series.")
             return None
         
         # Define thresholds
         small_data_threshold = 3000
         large_data_threshold = 10000
 
-        def calculate_maxlags(num_observations, max_lags_for_small_data=10, max_lags_for_large_data=20):
+        def calculate_maxlags(num_observations, 
+                              max_lags_for_small_data=10, 
+                              max_lags_for_large_data=20):
             if num_observations <= small_data_threshold:
                 logger.debug("Small dataset detected.")
                 # For small datasets
@@ -543,7 +556,8 @@ class MultivariateTimeSeries:
             return None
         logger.info(fitted_model.summary())
         n_forecast = days * 24 * 60
-        predict = fitted_model.get_prediction(start=len(train_df), end=len(train_df) + n_forecast - 1)
+        predict = fitted_model.get_prediction(start=len(train_df), 
+                                              end=len(train_df) + n_forecast - 1)
         predictions = predict.predicted_mean
         #
         logger.info(predictions.head())
@@ -555,13 +569,23 @@ class MultivariateTimeSeries:
         # NOTE: OUTPUT sample
         # {
         #     'physical_mem_free': [Timestamp('2024-07-06 00:03:00')], # Falling below threshold 5
-        #     'page_file_usage': [Timestamp('2024-07-06 00:03:00'), Timestamp('2024-07-06 00:04:00')], # Exceeding threshold 500
-        #     'processes': [Timestamp('2024-07-06 00:03:00'), Timestamp('2024-07-06 00:04:00')], # Falling below threshold 0
+        #     'page_file_usage': [
+            # Timestamp('2024-07-06 00:03:00'), Timestamp('2024-07-06 00:04:00')], 
+            # # Exceeding threshold 500
+        #     'processes': [Timestamp('2024-07-06 00:03:00'), Timestamp('2024-07-06 00:04:00')], 
+        # # Falling below threshold 0
         #     'tcp_connections': [], # No values exceed threshold 15
         #     'cpu_user': [], # No values exceed threshold 16
-        #     'cpu_sys': [Timestamp('2024-07-06 00:01:00'), Timestamp('2024-07-06 00:03:00'), Timestamp('2024-07-06 00:04:00')], # Falling below threshold 0.01
-        #     'sys_load': [Timestamp('2024-07-06 00:01:00'), Timestamp('2024-07-06 00:02:00'), Timestamp('2024-07-06 00:04:00')], # Exceeding threshold 2
-        #     'swap_pageout': [Timestamp('2024-07-06 00:01:00'), Timestamp('2024-07-06 00:02:00')], # Exceeding threshold 10
+        #     'cpu_sys': [
+            # Timestamp('2024-07-06 00:01:00'), 
+            # Timestamp('2024-07-06 00:03:00'), 
+            # Timestamp('2024-07-06 00:04:00')], # Falling below threshold 0.01
+        #     'sys_load': [
+            # Timestamp('2024-07-06 00:01:00'), 
+            # Timestamp('2024-07-06 00:02:00'), 
+            # Timestamp('2024-07-06 00:04:00')], # Exceeding threshold 2
+        #     'swap_pageout': [Timestamp('2024-07-06 00:01:00'), 
+        # Timestamp('2024-07-06 00:02:00')], # Exceeding threshold 10
         #     'cpuusedpercent': [Timestamp('2024-07-06 00:01:00')], # Exceeding threshold 14
         #     'mem_used_per': [Timestamp('2024-07-06 00:04:00')] # Exceeding threshold 0.02
         # }
@@ -612,7 +636,8 @@ class MultivariateTimeSeries:
 
             if problem:
                 await UserService.send_email_request(user.email, problem)
-                predictions, causes, train, test = await MultivariateTimeSeries.forecast(column=problem)
+                predictions, causes, train, test = await MultivariateTimeSeries.forecast(
+                    column=problem)
                 logger.debug("Issue found and email sent.")
             else:
                 logger.debug("No issues were found for the upcoming day.")
@@ -623,13 +648,15 @@ class MultivariateTimeSeries:
     @staticmethod
     async def find_issues_based_on_thresholds(df: pd.DataFrame, thresholds: dict) -> dict:
         """
-        Find and return the columns and timestamps where values either exceed or fall below given thresholds,
+        Find and return the columns and timestamps where values either exceed or fall below given 
+        thresholds,
         depending on the threshold type for each column.
 
         Args:
             df (pd.DataFrame): The DataFrame containing the data with a datetime index.
             thresholds (dict): A dictionary where keys are column names and values are tuples with 
-                               the threshold value and a flag indicating if it's a 'min' or 'max' threshold.
+                               the threshold value and a flag indicating if it's a 'min' or 'max' 
+                               threshold.
 
         Returns:
             dict: A dictionary where keys are column names and values are lists of timestamps
@@ -676,28 +703,16 @@ class MultivariateTimeSeries:
         # Define thresholds for each column
         # Example usage
         # Find indices or timestamps where values exceed thresholds
-        issues = await MultivariateTimeSeries.find_issues_based_on_thresholds(df, oshistory_detail_thresholds)
+        issues = await MultivariateTimeSeries.find_issues_based_on_thresholds(
+            df, 
+            oshistory_detail_thresholds)
         logger.debug(f"ISSUES: {issues}")
         return issues
-    
-        # NOTE: OUTPUT sample
-        # {
-        #     'physical_mem_free': [Timestamp('2024-07-06 00:03:00')], # Falling below threshold 5
-        #     'page_file_usage': [Timestamp('2024-07-06 00:03:00'), Timestamp('2024-07-06 00:04:00')], # Exceeding threshold 500
-        #     'processes': [Timestamp('2024-07-06 00:03:00'), Timestamp('2024-07-06 00:04:00')], # Falling below threshold 0
-        #     'tcp_connections': [], # No values exceed threshold 15
-        #     'cpu_user': [], # No values exceed threshold 16
-        #     'cpu_sys': [Timestamp('2024-07-06 00:01:00'), Timestamp('2024-07-06 00:03:00'), Timestamp('2024-07-06 00:04:00')], # Falling below threshold 0.01
-        #     'sys_load': [Timestamp('2024-07-06 00:01:00'), Timestamp('2024-07-06 00:02:00'), Timestamp('2024-07-06 00:04:00')], # Exceeding threshold 2
-        #     'swap_pageout': [Timestamp('2024-07-06 00:01:00'), Timestamp('2024-07-06 00:02:00')], # Exceeding threshold 10
-        #     'cpuusedpercent': [Timestamp('2024-07-06 00:01:00')], # Exceeding threshold 14
-        #     'mem_used_per': [Timestamp('2024-07-06 00:04:00')] # Exceeding threshold 0.02
-        # }
     
 class TimeoutException(Exception):
         pass
                
 if __name__ == '__main__':
-    # TODO: add async to the forecast loop fun
+    # TODO: add async to the forecast loop when you are done running this file (class) directly
     forecast = MultivariateTimeSeries.forecast_loop(column="cpuusedpercent")
     

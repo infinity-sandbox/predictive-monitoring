@@ -29,6 +29,7 @@ setup(
     install_requires=requirements,
     extras_require={"dev": ["pytest", "wheel", "twine", "black", "setuptools"]},
     dependency_links=[
-        "git+ssh://git@github.com/infinity-sandbox/predictive-monitoring.git@14c737c247f36e3264deea5c4b9e0b0b940d17ba#egg=applicare_ai&subdirectory=server"
+        "git+ssh://git@github.com/infinity-sandbox/predictive-monitoring.git@14c737c247f36e3" \
+        "264deea5c4b9e0b0b940d17ba#egg=applicare_ai&subdirectory=server"
     ]
 )

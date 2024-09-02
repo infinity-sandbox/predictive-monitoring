@@ -223,7 +223,8 @@ class LangchainAIService(OpenAIService):
                     from app.services.multivariate_timeseries import MultivariateTimeSeries
                     feature_importances_dict = await MultivariateTimeSeries._feature_selection(
                         non_empty_keys[0])
-                    return await OpenAIService.respond(question, feature_importances_dict['features'][:3])
+                    return await OpenAIService.respond(
+                        question, feature_importances_dict['features'][:3])
                 else:
                     return f"No causes have been detected so far, {username}."
             except Exception as e:
