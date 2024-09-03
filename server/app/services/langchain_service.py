@@ -32,8 +32,7 @@ class LangchainAIService(OpenAIService):
     def get_schema():
         db = LangchainAIService.connection()
         if hasattr(db, 'get_table_info'):
-            schema = db.get_table_info(table_names=['synth_txn', 
-                                                    # 'business_transactions', 
+            schema = db.get_table_info(table_names=['synth_txn',
                                                     'alert_queue', 
                                                     'eum_summary_day', 
                                                     'eum_visits', 

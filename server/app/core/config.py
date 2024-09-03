@@ -8,7 +8,7 @@ from utils.version import get_version_and_build
 version, build = get_version_and_build()
 
 class Settings(BaseSettings):
-    logger.info("Loading configurations...")
+    logger.info("Loading configs...")
     VERSION: str = version
     BUILD: str = build
     API_V1_STR: str = "/api/v1"
