@@ -11,6 +11,7 @@ cd ~/Documents/predictive-monitoring
 echo "Deleting environments..."
 rm -rf dashboard/node_modules
 rm -rf server/venv
+rm -rf test_
 
 echo "Deleting unwanted files..."
 rm -rf server/logs/logs.log
