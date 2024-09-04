@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# ------------------------------------------------------------
 cd server
 chmod +x install.sh
 source install.sh
@@ -12,7 +11,7 @@ chmod +x install.sh
 source install.sh
 
 cd ..
-# ------------------------------------------------------------
+
 echo "Listing all running containers..."
 docker ps
 

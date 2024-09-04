@@ -1,8 +1,6 @@
 #!/bin/bash
 
-echo "=============================="
-echo "  Setup Backend Environments  "
-echo "=============================="
+echo "Setup Backend Environments..."
 
 ENV_FILE="./server/.env"
 
@@ -30,9 +28,7 @@ EOF
 
 echo "Environment variables written to $ENV_FILE"
 
-echo "=============================="
-echo " Setup Frontend Environments  "
-echo "=============================="
+echo "Setup Frontend Environments..."
 
 ENV_FILE_DEV="./dashboard/.env"
 

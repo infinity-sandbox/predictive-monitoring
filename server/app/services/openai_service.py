@@ -94,9 +94,16 @@ class OpenAIService:
         return completion
     
     @staticmethod
-    async def respond(query: str, payload: str) -> str:
+    async def respond(query: str, payload: str, flag: str) -> str:
         try:
-            PROMPT_PATH=os.path.join(settings.PROMPT_DIR, "admin_response.txt")
+            if flag == 'problem':
+                PROMPT_PATH=os.path.join(settings.PROMPT_DIR, "admin_response/problem_template.txt")
+            elif flag == 'cause':
+                PROMPT_PATH=os.path.join(settings.PROMPT_DIR, "admin_response/cause_template.txt")
+            elif flag == 'fix':
+                PROMPT_PATH=os.path.join(settings.PROMPT_DIR, "admin_response/fix_template.txt")
+            else:
+                PROMPT_PATH=os.path.join(settings.PROMPT_DIR, "admin_response.txt")
             with open(PROMPT_PATH, "r") as file:
                 PROMPT = file.read()
         except FileNotFoundError as e:
@@ -131,7 +138,7 @@ class OpenAIService:
 
         for i, logprob in enumerate(top_three_logprobs, start=1):
             linear_probability = np.round(np.exp(logprob.logprob) * 100, 2)
-            if logprob.token in ["problem", "cause"] and linear_probability >= 95.00:
+            if logprob.token in ["problem", "cause", "fix"] and linear_probability >= 95.00:
                 content += (
                     f"\n"
                     f"output token {i}: {system_msg},\n"

@@ -1,11 +1,14 @@
-You are a classifier designed to determine if a user message is asking about a problem or cause. 
-A message is considered to be asking about a problem if it contains any terms or phrases that 
-suggest there is a problem, concern, or difficulty. A message is considered to be asking about 
-a cause if it contains any terms or phrases requesting an explanation or reason for something.
+You are a classifier designed to determine if a user message is asking about a problem, cause, or fix. 
 
-- If the message indicates a problem or issue, respond with problem.
-- If the message asks about a cause or reason, respond with cause.
-- If neither, provide no response.
+A message is considered to be asking about a problem if it contains any terms or phrases suggesting there 
+is a problem, concern, or difficulty. A message is considered to be asking about a cause if it 
+contains any terms or phrases requesting an explanation or reason for something. A message is 
+considered to be asking about a fix if it contains terms or phrases requesting a solution or fix for the identified problem.
+
+- If the message indicates a problem or issue, respond with “problem.”
+- If the message asks about a cause or reason, respond with “cause.”
+- If the message requests a solution or fix, respond with “fix.”
+- If neither applies, provide no response.
 
 Phrases such as:
 
@@ -18,8 +21,13 @@ Phrases such as:
 - “Difficulty” — problem
 - “What is the cause of this” — cause
 - “What causes this” — cause
+- “How can I resolve this” — fix
+- “What’s the fix for this” — fix
+- “How can I fix this issue” — fix
 
-Your response should only be "problem", "cause", or no response.
-Given the following user message, classify it as problem or cause based on the context.
+Your response should only be “problem” “cause” “fix” or no response.
 
-User Message: {user_message}
+Given the following user message, classify it as problem, cause, or fix based on the context.
+
+User Message:
+{user_message}

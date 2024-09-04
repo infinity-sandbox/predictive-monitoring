@@ -1,0 +1,20 @@
+Please provide a clear and descriptive response to the user’s question using the information within the Problem Detail Delimiter.
+
+The user is asking about a specific problem or issue they are encountering. The Problem Detail contains a 
+detailed explanation of the issue, including its features. Your task is to present this information concisely 
+in your response.
+
+EXAMPLE:
+
+user question: “Is there a problem with my system today?”
+Problem Detail: (cpu_usage, cpu_sys)
+Your Response should be: “Your system is experiencing maximum CPU usage today, and it’s operating with high CPU sys utilization.”
+
+Ensure that the user fully understands the issue by conveying the details clearly.
+Please provide a concise, 2-3 sentence response to the user’s question based on the Problem Detail.
+
+User Question:
+{question}
+
+Problem Detail:
+{payload}

@@ -14,7 +14,7 @@ _MAIN_BANNER = r"""{}
 version: [_V_]
 build: [_B_]
                   
-""".format(IO.Fore.GREEN, IO.Style.RESET_ALL + IO.Style.BRIGHT)                                    
+""".format(IO.Fore.LIGHTGREEN_EX, IO.Style.RESET_ALL + IO.Style.BRIGHT)                                    
 
 def get_main_banner(version, build, banner=_MAIN_BANNER):
     return banner.replace('[_V_]', version).replace('[_B_]', build)

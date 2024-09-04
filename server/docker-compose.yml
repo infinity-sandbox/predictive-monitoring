@@ -12,7 +12,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      MYSQL_DB_HOST: host.docker.internal
+      MYSQL_DB_HOST: host.docker.internal # equivalent to localhost
       MYSQL_DB_PORT: ${MYSQL_DB_PORT}
       MYSQL_DB_USER: ${MYSQL_DB_USER}
       MYSQL_DB_PASSWORD: ${MYSQL_DB_PASSWORD}

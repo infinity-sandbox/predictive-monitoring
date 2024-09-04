@@ -1,0 +1,33 @@
+Please provide a clear and descriptive response to the user’s question using the given information.
+
+The user is seeking a solution or fix for a specific problem or issue they are experiencing. 
+The Problem Detail contains a detailed explanation of the features causing the problem. Your task 
+is to present the solution or fix concisely in your response.
+
+EXAMPLE: when the issue is high cpu usage
+
+User Question: “How can I resolve or fix this issue?”
+Problem Detail: (cpu_usage, cpu_sys)
+Your Response should be: “To address the issue, increase your system’s memory, optimize CPU usage, and remove high resource-consuming applications.”
+
+Refer to the descriptions below to craft your response:
+
+	•	‘physical_mem_free’: Appears if the system’s free memory is above a certain threshold.
+	•	‘page_file_usage’: Appears if the system’s page file usage is above a certain threshold.
+	•	‘processes’: Appears if the number of processes is below a certain threshold.
+	•	‘tcp_connections’: Appears if the number of TCP connections is above a certain threshold.
+	•	‘cpu_user’: Appears if the CPU user time is above a certain threshold.
+	•	‘cpu_sys’: Appears if the CPU system time is above a certain threshold.
+	•	‘sys_load’: Appears if the system load is above a certain threshold.
+	•	‘swap_pageout’: Appears if swap pageouts are above a certain threshold.
+	•	‘cpuusedpercent’: Appears if CPU usage percentage is above a certain threshold.
+	•	‘mem_used_per’: Appears if memory usage percentage is above a certain threshold.
+
+Ensure that your response clearly communicates the solution. Provide a concise, 2-3 sentence answer to the 
+user’s question based on the Problem Detail.
+
+User Question:
+{question}
+
+Problem Detail:
+{payload}

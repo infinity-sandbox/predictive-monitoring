@@ -197,6 +197,9 @@ class LangchainAIService(OpenAIService):
     
     @staticmethod
     async def full_chain(question: str, username: str) -> str:
+        #TODO: async process for dashboard, chat, and anomaly detection (from the frontend)
+        #FIXME: don't only run the loop when the home page is clicked, run it when the user logs in
+        #TODO: add demoable features to the chat
         if await OpenAIService.classify(question) == "problem":
             try:
                 is_anomaly, issues = await LangchainAIService.if_anomaly()
@@ -208,7 +211,7 @@ class LangchainAIService(OpenAIService):
                             datetime.utcfromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S') 
                             for ts in values]
                     formatted_issues = {key for key, value in non_empty_issues.items()}
-                    return await OpenAIService.respond(question, formatted_issues)
+                    return await OpenAIService.respond(question, formatted_issues, 'problem')
                 else:
                     return f"No issues have been detected so far, {username}."
             except Exception as e:
@@ -223,9 +226,21 @@ class LangchainAIService(OpenAIService):
                     feature_importances_dict = await MultivariateTimeSeries._feature_selection(
                         non_empty_keys[0])
                     return await OpenAIService.respond(
-                        question, feature_importances_dict['features'][:3])
+                        question, feature_importances_dict['features'][:3], 'cause')
                 else:
                     return f"No causes have been detected so far, {username}."
+            except Exception as e:
+                logger.error(f"Error getting response: {e}")
+                return f"Error getting response: {e}"
+        elif await OpenAIService.classify(question) == "fix":
+            try:
+                is_anomaly, issues = await LangchainAIService.if_anomaly()
+                if is_anomaly:
+                    non_empty_issues = {key: value for key, value in issues.items() if value}
+                    formatted_issues = {key for key, value in non_empty_issues.items()}
+                    return await OpenAIService.respond(question, formatted_issues, 'fix')
+                else:
+                    return f"No issues have been detected so far, {username}."
             except Exception as e:
                 logger.error(f"Error getting response: {e}")
                 return f"Error getting response: {e}"

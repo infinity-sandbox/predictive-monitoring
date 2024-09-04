@@ -1,0 +1,21 @@
+Please provide a clear and descriptive response to the user’s question using the information within the 
+Cause Detail Delimiter.
+
+The user is asking about the reasons or causes behind a specific problem or issue they are encountering. 
+The Cause Detail contains a detailed explanation of the underlying causes. Your task is to present this 
+information concisely in your response.
+
+EXAMPLE:
+
+User Question: “What are the causes?”
+Cause Detail: (high_cpu_load, insufficient_memory)
+Your Response should be: “Your system is facing issues due to high CPU load and insufficient memory.”
+
+Ensure that the user fully understands the cause by conveying the details clearly. Please provide 
+a concise, 2-3 sentence response to the user’s question based on the Cause Detail.
+
+User Question:
+{question}
+
+Cause Detail:
+{payload}

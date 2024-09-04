@@ -290,12 +290,18 @@ class MultivariateTimeSeries:
             return None, None, None, None
         
         # Define thresholds
+        very_small_data_threshold = 50
         small_data_threshold = 5000
         large_data_threshold = 10000
 
         def calculate_maxlags(num_observations, 
+                              max_lags_for_very_small_data=1,
                               max_lags_for_small_data=10, 
                               max_lags_for_large_data=20):
+            if num_observations <= very_small_data_threshold:
+                logger.debug("Very small dataset detected.")
+                # For very small datasets
+                return min(max_lags_for_very_small_data, num_observations - 1)
             if num_observations <= small_data_threshold:
                 logger.debug("Small dataset detected.")
                 # For small datasets
@@ -309,7 +315,7 @@ class MultivariateTimeSeries:
                 # For medium datasets
                 return min(num_observations // 4, num_observations - 1)
             
-        # TODO: increase the percentage of data used for training
+        # NOTE: increase the percentage of data used for training
         TRAIN_PERC = 0.1 # 10% of data used for training
         
         train_size = int(len(macro_data) * TRAIN_PERC)
@@ -320,6 +326,8 @@ class MultivariateTimeSeries:
         # Define the split point (10% of the total data)
         split_point = int(total_size * TRAIN_PERC)
         # Split the data into test and train DataFrames
+        
+        #TODO: change test to train and vice versa
         test_df = macro_data.iloc[:total_size - split_point]  # First 90% of the data
         train_df = macro_data.iloc[total_size - split_point:]  # Last 10% of the data
 
@@ -497,7 +505,7 @@ class MultivariateTimeSeries:
         # Split data into training and testing based on time
         # DEBUG:remove this line when deploying (proven this casues maxlags too large error)
         # macro_data = macro_data.iloc[:1298]
-        # TODO: increase the percentage of data used for training
+        # NOTE: increase the percentage of data used for training
         TRAIN_PERC = 0.01 # 10% of data used for training
         train_size = int(len(macro_data) * TRAIN_PERC)
         train_df = macro_data.iloc[:train_size]
@@ -713,6 +721,5 @@ class TimeoutException(Exception):
         pass
                
 if __name__ == '__main__':
-    # TODO: add async to the forecast loop when you are done running this file (class) directly
     forecast = MultivariateTimeSeries.forecast_loop(column="cpuusedpercent")
     
